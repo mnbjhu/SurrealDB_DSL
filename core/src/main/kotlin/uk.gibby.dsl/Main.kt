@@ -1,11 +1,12 @@
 package uk.gibby.dsl
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlin.system.measureTimeMillis
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 fun main(){
+    val result: ServiceResult<String> = ServiceResult.Success("test")
+    println(Json.encodeToString(result))
+    /*
     val connection = DatabaseConnection(
         host = "localhost",
         port = 8000,
@@ -30,4 +31,6 @@ fun main(){
             }
         }
     }
+
+     */
 }

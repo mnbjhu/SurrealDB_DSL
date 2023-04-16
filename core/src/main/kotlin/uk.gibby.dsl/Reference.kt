@@ -3,7 +3,6 @@ package uk.gibby.dsl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 
-val userTable = Table("user_table", UserRecord("_"))
 
 interface Reference<T> {
     fun getReference(): String
@@ -58,6 +57,7 @@ open class SetScope {
     fun getSetString() = text.dropLast(1)
 }
 
+class Upda
 
 interface RecordType<T>: ObjectType<T> {
     val id: RecordLink<T, RecordType<T>>
@@ -65,6 +65,7 @@ interface RecordType<T>: ObjectType<T> {
         return type.createReference(name) as U
     }
     fun <T, U: RecordType<T>>U.id() = attrOf("id", RecordLink<T, U>("_"))
+    fun <T, U: RecordType<T>>linked(table: Table<T, U>) = RecordLink<T, U>("_")
 }
 
 
@@ -74,6 +75,8 @@ interface ObjectType<T>: Reference<T> {
     }
 }
 
+
+@Serializable(with = LinkedSerializer::class)
 sealed class Linked<T> {
     abstract val id: String
     data class Reference<T>(override val id: String): Linked<T>()
@@ -113,8 +116,6 @@ value class NullableType<T, U: Reference<T>>(private val reference: String): Ref
 @Serializable
 data class TestClass(val inner: String)
 
-@Serializable
-data class User(val username: String, val password: String)
 
 @JvmInline
 value class TestType(private val reference: String): ObjectType<TestClass> {
@@ -124,17 +125,6 @@ value class TestType(private val reference: String): ObjectType<TestClass> {
 }
 
 val testType = TestType("_")
-
-@JvmInline
-value class UserRecord(private val reference: String): RecordType<User> {
-    override val id: RecordLink<User, UserRecord> get() = id()
-    inline val username get() = attrOf("username", stringType)
-    inline val password get() = attrOf("password", stringType)
-    inline val data get() = attrOf("data", testType)
-
-    override fun getReference(): String = reference
-    override fun createReference(ref: String) = UserRecord(ref)
-}
 
 data class ListType<T, U: Reference<T>>(private val inner: U, private val reference: String): Reference<List<T>> {
     override fun getReference() = reference
