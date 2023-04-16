@@ -15,8 +15,7 @@ fun main(){
         db.transaction {
             +testTable.create(Test("something", true, listOf("a", "b", "c"), null))
             testTable.selectAll{
-                where()
-                where(condition = myString eq "test")
+
             }
         }
     }
