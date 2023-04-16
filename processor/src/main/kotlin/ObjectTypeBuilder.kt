@@ -1,14 +1,10 @@
-import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
-import com.squareup.kotlinpoet.ksp.toTypeName
-import uk.gibby.dsl.*
-import kotlin.reflect.KClass
+import uk.gibby.dsl.types.ObjectType
 
 fun generateObjectType(element: KSClassDeclaration, resolver: Resolver, logger: KSPLogger): TypeSpec {
     val className = element.toClassName()

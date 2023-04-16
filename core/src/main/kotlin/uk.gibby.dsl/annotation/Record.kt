@@ -1,4 +1,4 @@
-package uk.gibby.dsl
+package uk.gibby.dsl.annotation
 
 
 @Target(AnnotationTarget.CLASS)

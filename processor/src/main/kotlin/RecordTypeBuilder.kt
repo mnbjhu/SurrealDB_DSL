@@ -7,8 +7,12 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
-import uk.gibby.dsl.*
+import uk.gibby.dsl.annotation.Object
+import uk.gibby.dsl.model.Linked
+import uk.gibby.dsl.types.*
+import java.time.LocalDateTime
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 
 
 fun generateRecordTypeClass(element: KSClassDeclaration, resolver: Resolver, logger: KSPLogger): TypeSpec {
@@ -86,6 +90,10 @@ fun generateRecordTypeClass(element: KSClassDeclaration, resolver: Resolver, log
 val fieldTypeMapping: Map<String, SurrealFieldType> = mapOf(
     "String" to Primitive.StringField,
     "Boolean" to Primitive.BooleanField,
+    "Long" to Primitive.LongField,
+    "Double" to Primitive.DoubleField,
+    "Duration" to Primitive.DurationField,
+    "Instant" to Primitive.DateTimeField,
 )
 
 fun getFieldType(fieldType: KSType, resolver: Resolver, logger: KSPLogger): SurrealFieldType {
@@ -138,7 +146,7 @@ sealed class Primitive(): SurrealFieldType {
             return String::class.asTypeName()
         }
         override fun getSurrealTypeFunction(): CodeBlock {
-            return CodeBlock.of("%M", MemberName("uk.gibby.dsl", "stringType"))
+            return CodeBlock.of("%M", MemberName("uk.gibby.dsl.types", "stringType"))
         }
     }
     object BooleanField: Primitive() {
@@ -149,7 +157,51 @@ sealed class Primitive(): SurrealFieldType {
             return Boolean::class.asTypeName()
         }
         override fun getSurrealTypeFunction(): CodeBlock {
-            return CodeBlock.of("%M", MemberName("uk.gibby.dsl", "booleanType"))
+            return CodeBlock.of("%M", MemberName("uk.gibby.dsl.types", "booleanType"))
+        }
+    }
+    object LongField: Primitive() {
+        override fun getSurrealType(): TypeName {
+            return LongType::class.asTypeName()
+        }
+        override fun getKotlinType(): TypeName {
+            return Long::class.asTypeName()
+        }
+        override fun getSurrealTypeFunction(): CodeBlock {
+            return CodeBlock.of("%M", MemberName("uk.gibby.dsl.types", "longType"))
+        }
+    }
+    object DoubleField: Primitive() {
+        override fun getSurrealType(): TypeName {
+            return DoubleType::class.asTypeName()
+        }
+        override fun getKotlinType(): TypeName {
+            return Double::class.asTypeName()
+        }
+        override fun getSurrealTypeFunction(): CodeBlock {
+            return CodeBlock.of("%M", MemberName("uk.gibby.dsl.types", "doubleType"))
+        }
+    }
+    object DurationField: Primitive() {
+        override fun getSurrealType(): TypeName {
+            return DurationType::class.asTypeName()
+        }
+        override fun getKotlinType(): TypeName {
+            return Duration::class.asTypeName()
+        }
+        override fun getSurrealTypeFunction(): CodeBlock {
+            return CodeBlock.of("%M", MemberName("uk.gibby.dsl.types", "durationType"))
+        }
+    }
+    object DateTimeField: Primitive() {
+        override fun getSurrealType(): TypeName {
+            return DateTimeType::class.asTypeName()
+        }
+        override fun getKotlinType(): TypeName {
+            return LocalDateTime::class.asTypeName()
+        }
+        override fun getSurrealTypeFunction(): CodeBlock {
+            return CodeBlock.of("%M", MemberName("uk.gibby.dsl.types", "dateTimeType"))
         }
     }
 }
@@ -165,7 +217,7 @@ class ListField(private val inner: SurrealFieldType): SurrealFieldType {
 
     override fun getSurrealTypeFunction(): CodeBlock {
         return CodeBlock.builder()
-            .add(CodeBlock.of("%M(", MemberName("uk.gibby.dsl", "list")))
+            .add(CodeBlock.of("%M(", MemberName("uk.gibby.dsl.types", "list")))
             .add(inner.getSurrealTypeFunction())
             .add(")")
             .build()
@@ -185,7 +237,7 @@ class NullableField(private val inner: SurrealFieldType): SurrealFieldType {
 
     override fun getSurrealTypeFunction(): CodeBlock {
         return CodeBlock.builder()
-            .add(CodeBlock.of("%M(", MemberName("uk.gibby.dsl", "nullable")))
+            .add(CodeBlock.of("%M(", MemberName("uk.gibby.dsl.types", "nullable")))
             .add(inner.getSurrealTypeFunction())
             .add(")")
             .build()

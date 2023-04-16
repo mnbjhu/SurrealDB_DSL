@@ -1,10 +1,7 @@
-package uk.gibby.dsl
+package uk.gibby.dsl.driver
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.*
 import io.ktor.util.collections.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
@@ -12,23 +9,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.*
+import uk.gibby.dsl.model.*
+import uk.gibby.dsl.model.auth.RootAuth
+import uk.gibby.dsl.model.rows.Row1
+import uk.gibby.dsl.model.rpc.RpcRequest
+import uk.gibby.dsl.model.rpc.RpcResponse
+import uk.gibby.dsl.scopes.TransactionScope
+import uk.gibby.dsl.types.Reference
 
-val Client = HttpClient(CIO) {
-    install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(Json { ignoreUnknownKeys = true })
-    }
-}
-
-@Serializable
-data class RpcRequest(val id: String, val method: String, val params: JsonArray)
-
-@Serializable
-data class RpcResponse(val id: String, val result: JsonElement)
-
-class DatabaseConnection(val host: String, val port: Int) {
+class DatabaseConnection(private val host: String, private val port: Int) {
 
     private var count = 0L
     private var connection: DefaultClientWebSocketSession? = null
@@ -80,47 +71,11 @@ class DatabaseConnection(val host: String, val port: Int) {
         val queryText = transaction.getQueryText()
         val rawResponse = query(queryText)
         val response = try {
-            buildJsonArray { (rawResponse as JsonArray).forEach{ add(surrealJson.decodeFromJsonElement<Row1>(it).col1) } }
+            buildJsonArray { (rawResponse as JsonArray).forEach { add(surrealJson.decodeFromJsonElement<Row1>(it).col1) } }
         } catch (e: Exception) {
             rawResponse
         }
 
         return surrealJson.decodeFromJsonElement(response)
     }
-}
-
-class TransactionScope {
-    private var generated: String = "BEGIN TRANSACTION;"
-    operator fun Reference<*>.unaryPlus(){
-        generated += getReference()
-        generated += ";"
-    }
-    fun getQueryText() = generated + "COMMIT TRANSACTION;"
-}
-
-class UpdateScope: SetScope(), FilterScope {
-    private var condition: String? = null
-    override fun getFilterString() =
-        if(condition == null) "" else " WHERE $condition"
-
-    override fun where(condition: BooleanType) {
-        this.condition = condition.getReference()
-    }
-
-    override fun <T, U : RecordType<T>> fetch(items: ListType<Linked<T>, RecordLink<T, U>>) {
-        TODO("Not yet implemented")
-    }
-}
-
-@Serializable
-data class QueryResponse(val time: String, val status: String, val result: JsonElement)
-
-@Serializable
-data class RootAuth(val user: String, val pass: String)
-
-@Serializable
-data class Row1(val col1: JsonElement)
-
-val surrealJson = Json {
-    ignoreUnknownKeys = true
 }

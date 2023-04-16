@@ -1,13 +1,13 @@
-package uk.gibby.dsl
+package uk.gibby.dsl.serialization
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.elementDescriptors
-import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
+import uk.gibby.dsl.model.Linked
 
 @Serializable(with = ServiceResultSerializer::class)
 sealed class ServiceResult<out T : Any> {
