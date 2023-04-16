@@ -1,4 +1,4 @@
-package uk.gibby.surrealdb.core
+package uk.gibby.dsl
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -14,25 +14,27 @@ inline fun <reified T, U: RecordType<T>> Table<T, U>.create(content: T): ListTyp
     ListType(recordType, "CREATE $name CONTENT ${surrealJson.encodeToString(content)}")
 
 data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
-    inline fun delete(crossinline deleteScope: context(FilterScope) U.() -> Unit = {}): NullableType<String, StringType> {
+    fun delete(deleteScope: context(FilterScope) U.() -> Unit = {}): NullableType<String, StringType> {
         val filter = FilterScopeImpl()
         filter.deleteScope(recordType)
         return NullableType("DELETE FROM $name ${filter.getFilterString()}")
     }
 
-    inline fun selectAll(crossinline selectScope: context(FilterScope) U.() -> Unit = {}): ListType<T, U> {
+    fun selectAll(selectScope: context(FilterScope) U.() -> Unit = {}): ListType<T, U> {
         val filter = FilterScopeImpl()
         filter.selectScope(recordType)
         return ListType(recordType, "SELECT * FROM $name ${filter.getFilterString()}")
     }
 
-    inline fun <r, R: Reference<r>>select(projection: context(FilterScope) U.() -> R): ListType<r, R> {
+    fun <r, R: Reference<r>>select(projection: context(FilterScope) U.() -> R): ListType<r, R> {
         val filter = FilterScopeImpl()
-        val toSelect = projection(filter, recordType)
-        return ListType(toSelect, "SELECT VALUE ${toSelect.getReference()} AS col1 FROM $name ${filter.getFilterString()}")
+        val toSelect = with(filter) {
+            projection(recordType)
+        }
+        return ListType(toSelect, "SELECT ${toSelect.getReference()} AS col1 FROM $name ${filter.getFilterString()}")
     }
 
-    inline fun update(updateScope: context(SetScope, FilterScope) U.() -> Unit): ListType<T, U> {
+    fun update(updateScope: context(SetScope, FilterScope) U.() -> Unit): ListType<T, U> {
         val setScope = SetScope()
         val filterScope = FilterScopeImpl()
                 updateScope(setScope, filterScope, recordType)
@@ -145,7 +147,7 @@ fun <T, U: Reference<T>>nullable(inner: U) = NullableType<T, U>("_")
 
 
 
-class FilterScopeImpl(): FilterScope {
+class FilterScopeImpl: FilterScope {
     private var where: String? = null
     override fun getFilterString(): String {
         var r = ""

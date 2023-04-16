@@ -1,4 +1,4 @@
-package uk.gibby.surrealdb.core
+package uk.gibby.dsl
 
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -28,7 +28,7 @@ data class RpcRequest(val id: String, val method: String, val params: JsonArray)
 @Serializable
 data class RpcResponse(val id: String, val result: JsonElement)
 
-class DatabaseConnection(val host: String, val port: Int, val ns: String, val db: String) {
+class DatabaseConnection(val host: String, val port: Int) {
 
     private var count = 0L
     private var connection: DefaultClientWebSocketSession? = null

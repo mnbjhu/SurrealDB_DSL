@@ -1,4 +1,5 @@
-package uk.gibby.surrealdb.core
+package uk.gibby.dsl
+
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.SOURCE)

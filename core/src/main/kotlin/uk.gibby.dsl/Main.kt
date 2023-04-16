@@ -1,4 +1,4 @@
-package uk.gibby.surrealdb.core
+package uk.gibby.dsl
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -9,8 +9,6 @@ fun main(){
     val connection = DatabaseConnection(
         host = "localhost",
         port = 8000,
-        ns = "test",
-        db = "test"
     )
     runBlocking {
         connection.connect()
