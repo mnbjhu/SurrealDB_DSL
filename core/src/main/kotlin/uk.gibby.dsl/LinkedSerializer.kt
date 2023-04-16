@@ -1,8 +1,13 @@
 package uk.gibby.dsl
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.elementDescriptors
+import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
 
 @Serializable(with = ServiceResultSerializer::class)
 sealed class ServiceResult<out T : Any> {
@@ -61,36 +66,27 @@ class ServiceResultSerializer<T : Any>(
 
 
 class LinkedSerializer<T : Any>(
-    tSerializer: KSerializer<T>
+    private val tSerializer: KSerializer<T>
 ) : KSerializer<Linked<T>> {
-    @Serializable
-    @SerialName("ServiceResult")
-    data class LinkedSurrogate<T : Any> @OptIn(ExperimentalSerializationApi::class) constructor(
-        val type: Type,
-        // The annotation is not necessary, but it avoids serializing "data = null"
-        // for "Error" results.
-        @EncodeDefault(EncodeDefault.Mode.NEVER)
-        val data: T? = null,
-        @EncodeDefault(EncodeDefault.Mode.NEVER)
-        val id: String? = null
-    ) {
-        enum class Type { REFERENCE, ACTUAL }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor(tSerializer.descriptor.serialName + "Link"){
+        tSerializer.descriptor.elementDescriptors.forEach {
+            element("id", String.serializer().descriptor)
+            element(it.serialName, it)
+        }
     }
 
-    private val surrogateSerializer = LinkedSurrogate.serializer(tSerializer)
-
-    override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
-
     override fun deserialize(decoder: Decoder): Linked<T> {
-        val surrogate = surrogateSerializer.deserialize(decoder)
-        return when (surrogate.type) {
-            LinkedSurrogate.Type.ACTUAL ->
-                if (surrogate.data != null)
-                    Linked.Actual(surrogate.id!!, surrogate.data)
-                else
-                    throw SerializationException("Missing data for successful result")
-            LinkedSurrogate.Type.REFERENCE ->
-                Linked.Reference(surrogate.id!!)
+        return try {
+            val result = decoder.decodeSerializableValue(tSerializer)
+            var id: String? = null
+            decoder.decodeStructure(descriptor) {
+                id = decodeStringElement(descriptor, 0)
+            }
+            Linked.Actual(id!!, result)
+        } catch (e: Exception) {
+            Linked.Reference(decoder.decodeString())
         }
     }
 

@@ -21,7 +21,7 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
 
     fun selectAll(selectScope: context(FilterScope) U.() -> Unit = {}): ListType<T, U> {
         val filter = FilterScopeImpl()
-        filter.selectScope(recordType)
+        with(filter) { selectScope(recordType) }
         return ListType(recordType, "SELECT * FROM $name ${filter.getFilterString()}")
     }
 
@@ -30,7 +30,7 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
         val toSelect = with(filter) {
             projection(recordType)
         }
-        return ListType(toSelect, "SELECT ${toSelect.getReference()} AS col1 FROM $name ${filter.getFilterString()}")
+        return ListType(toSelect, "SELECT VALUE ${toSelect.getReference()} AS col1 FROM $name ${filter.getFilterString()}")
     }
 
     fun update(updateScope: context(SetScope, FilterScope) U.() -> Unit): ListType<T, U> {
@@ -42,13 +42,15 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
     }
 }
 
+
+
 open class SetScope {
     private var text = "SET "
     fun _addParam(paramText: String){
         text += paramText
     }
     infix fun <T, U: Reference<T>>U.setAs(value: U){
-        text += "${getReference()} = ${value.getReference()},"
+        text += "${getReference()} = (${value.getReference()}),"
     }
 
     inline infix fun <reified T> Reference<T>.setAs(value: T) {
@@ -57,15 +59,15 @@ open class SetScope {
     fun getSetString() = text.dropLast(1)
 }
 
-class Upda
 
 interface RecordType<T>: ObjectType<T> {
     val id: RecordLink<T, RecordType<T>>
     override fun <T, U: Reference<T>>attrOf(name: String, type: U): U {
-        return type.createReference(name) as U
+        return if(getReference() == "_")  type.createReference(name) as U
+            else type.createReference("${getReference()}.$name") as U
     }
-    fun <T, U: RecordType<T>>U.id() = attrOf("id", RecordLink<T, U>("_"))
-    fun <T, U: RecordType<T>>linked(table: Table<T, U>) = RecordLink<T, U>("_")
+    fun <T, U: RecordType<T>>U.id() = attrOf("id", RecordLink<T, U>("_", this))
+    fun <T, U: RecordType<T>>linked(table: Table<T, U>) = RecordLink<T, U>("_", table.recordType)
 }
 
 
@@ -83,10 +85,10 @@ sealed class Linked<T> {
     data class Actual<T>(override val id: String, val result: T): Linked<T>()
 }
 
-@JvmInline
-value class RecordLink<T, out U: RecordType<T>>(private val reference: String): Reference<Linked<T>> {
+data class RecordLink<T, out U: RecordType<T>>(private val reference: String, internal val inner: U): Reference<Linked<T>> {
+
     override fun getReference() = reference
-    override fun createReference(ref: String): Reference<Linked<T>> = RecordLink<T, U>(ref)
+    override fun createReference(ref: String): Reference<Linked<T>> = RecordLink<T, U>(ref, inner)
 }
 
 val stringType = StringType("_")
@@ -126,12 +128,14 @@ value class TestType(private val reference: String): ObjectType<TestClass> {
 
 val testType = TestType("_")
 
-data class ListType<T, U: Reference<T>>(private val inner: U, private val reference: String): Reference<List<T>> {
+data class ListType<T, U: Reference<T>>(internal val inner: U, private val reference: String): Reference<List<T>> {
     override fun getReference() = reference
     override fun createReference(ref: String) = ListType(inner, ref)
 }
 
-
+fun <T, U: RecordType<T>, r, R: Reference<r>>ListType<Linked<T>, RecordLink<T, U>>.linked(transform: U.() -> R): ListType<r, R> =
+    (inner.inner.createReference("") as U)
+        .run { val returned = transform(); ListType(returned, this@linked.getReference() + returned.getReference())}
 fun <T, U: Reference<T>>list(inner: U) = ListType(inner, "_")
 fun <T, U: Reference<T>>nullable(inner: U) = NullableType<T, U>("_")
 
@@ -139,9 +143,11 @@ fun <T, U: Reference<T>>nullable(inner: U) = NullableType<T, U>("_")
 
 class FilterScopeImpl: FilterScope {
     private var where: String? = null
+    private var fetch: String? = null
     override fun getFilterString(): String {
         var r = ""
         if(where != null) r += "WHERE $where"
+        if(fetch != null) r += "FETCH $fetch"
         return r
 
     }
@@ -149,11 +155,17 @@ class FilterScopeImpl: FilterScope {
     override fun where(condition: BooleanType) {
         where = condition.getReference()
     }
+
+    override fun <T, U : RecordType<T>> fetch(items: ListType<Linked<T>, RecordLink<T, U>>) {
+        fetch = items.getReference()
+    }
+
 }
 
 interface FilterScope {
     fun getFilterString(): String
     fun where(condition: BooleanType)
+    fun <T, U: RecordType<T>>fetch(items: ListType<Linked<T>, RecordLink<T, U>>)
 }
 
 infix fun <T, U: Reference<T>>U.eq(other: U) = BooleanType("(${getReference()} == ${other.getReference()})")

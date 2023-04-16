@@ -2,20 +2,13 @@ import com.google.devtools.ksp.getClassDeclarationByName
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSName
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.ksp.TypeParameterResolver
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import uk.gibby.dsl.*
-import javax.lang.model.element.ElementKind
-import javax.lang.model.element.TypeElement
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.withNullability
 
 
 fun generateRecordTypeClass(element: KSClassDeclaration, resolver: Resolver, logger: KSPLogger): TypeSpec {
@@ -107,6 +100,14 @@ fun getFieldType(fieldType: KSType, resolver: Resolver, logger: KSPLogger): Surr
         val innerFieldType = getFieldType(innerType, resolver, logger)
         return ListField(innerFieldType)
     }
+    if (fieldType.starProjection().isAssignableFrom<Linked<*>>(resolver)) {
+        val innerType = fieldType.arguments[0].type!!.resolve()
+        return RecordFieldType(innerType)
+    }
+
+    if (fieldType.declaration.annotations.any { it.annotationType.resolve().isAssignableFrom<Object>(resolver) }) {
+        return ObjectFieldType(fieldType)
+    }
     return fieldTypeMapping[fieldType.toString()]
         ?: throw IllegalStateException("Unsupported field type: $fieldType")
 }
@@ -187,6 +188,50 @@ class NullableField(private val inner: SurrealFieldType): SurrealFieldType {
             .add(CodeBlock.of("%M(", MemberName("uk.gibby.dsl", "nullable")))
             .add(inner.getSurrealTypeFunction())
             .add(")")
+            .build()
+    }
+
+}
+
+
+class RecordFieldType(private val innerType: KSType): SurrealFieldType {
+    override fun getSurrealType(): TypeName {
+        return RecordLink::class
+            .asTypeName()
+            .parameterizedBy(innerType.toTypeName(), ClassName(innerType.declaration.packageName.asString(), innerType.toTypeName().toString() + "Record"))
+    }
+
+    override fun getKotlinType(): TypeName {
+        return Linked::class.asTypeName().parameterizedBy(innerType.toTypeName())
+    }
+
+    override fun getSurrealTypeFunction(): CodeBlock {
+        return CodeBlock.builder()
+            .add(CodeBlock.of("linked("))
+            .add("%M)", MemberName(
+                innerType.declaration.packageName.asString(),
+                innerType.toTypeName().toString() + "Table")
+            )
+            .build()
+    }
+
+}
+
+class ObjectFieldType(private val innerType: KSType): SurrealFieldType {
+    override fun getSurrealType(): TypeName {
+        return ClassName(innerType.declaration.packageName.asString(), innerType.toTypeName().toString() + "Object")
+    }
+
+    override fun getKotlinType(): TypeName {
+        return innerType.toTypeName()
+    }
+
+    override fun getSurrealTypeFunction(): CodeBlock {
+        return CodeBlock.builder()
+            .add("%M", MemberName(
+                innerType.declaration.packageName.asString(),
+                innerType.toTypeName().toString() + "Type")
+            )
             .build()
     }
 

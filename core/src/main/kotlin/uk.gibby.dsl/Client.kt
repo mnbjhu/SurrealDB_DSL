@@ -63,6 +63,7 @@ class DatabaseConnection(val host: String, val port: Int) {
     }
 
     suspend fun query(queryText: String): JsonElement {
+        println(queryText)
         val result = sendRequest("query", buildJsonArray { add(queryText) })
         return surrealJson.decodeFromJsonElement<QueryResponse>((result as JsonArray).last()).result
     }
@@ -104,6 +105,10 @@ class UpdateScope: SetScope(), FilterScope {
 
     override fun where(condition: BooleanType) {
         this.condition = condition.getReference()
+    }
+
+    override fun <T, U : RecordType<T>> fetch(items: ListType<Linked<T>, RecordLink<T, U>>) {
+        TODO("Not yet implemented")
     }
 }
 
