@@ -26,7 +26,7 @@ object SurrealString {
 
     fun join(deliminator: StringType, items: List<StringType>) = stringType.createReference("string::join(${deliminator.getReference()},${items.joinToString(","){ it.getReference() }})")
 
-    fun length(value: StringType) = longType.createReference("string::length(${value.getReference()})")
+    fun length(value: StringType) = longType.createReference("string::len(${value.getReference()})")
 
     fun lowercase(value: StringType) = stringType.createReference("string::lowercase(${value.getReference()})")
 
@@ -54,3 +54,9 @@ object SurrealString {
     fun trim(value: StringType) = stringType.createReference("string::trim(${value.getReference()})")
     fun words(value: StringType) = ListType(stringType, "string::words(${value.getReference()})")
 }
+
+inline fun StringType.length(): LongType = SurrealString.length(this)
+
+inline operator fun StringType.plus(other: StringType) = stringType.createReference("(${this.getReference()} + ${other.getReference()})")
+inline operator fun String.plus(other: StringType) = stringType.createReference("(${surrealJson.encodeToString(this)} + ${other.getReference()})")
+inline operator fun StringType.plus(other: String) = stringType.createReference("(${this.getReference()} + ${surrealJson.encodeToString(other)})")

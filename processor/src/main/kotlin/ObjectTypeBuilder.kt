@@ -9,7 +9,7 @@ import uk.gibby.dsl.types.ObjectType
 fun generateObjectType(element: KSClassDeclaration, resolver: Resolver, logger: KSPLogger): TypeSpec {
     val className = element.toClassName()
     val recordTypeName = "${className.simpleName}Object"
-    val generatedClassName = ClassName.bestGuess("$recordTypeName")
+    val generatedClassName = ClassName.bestGuess(recordTypeName)
     return TypeSpec.classBuilder(recordTypeName)
         .addModifiers(KModifier.VALUE)
         .addAnnotation(JvmInline::class)

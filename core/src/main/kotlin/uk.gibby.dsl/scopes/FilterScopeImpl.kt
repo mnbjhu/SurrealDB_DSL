@@ -11,8 +11,8 @@ class FilterScopeImpl: FilterScope {
     private var fetch: String? = null
     override fun getFilterString(): String {
         var r = ""
-        if(where != null) r += "WHERE $where"
-        if(fetch != null) r += "FETCH $fetch"
+        if(where != null) r += " WHERE $where"
+        if(fetch != null) r += " FETCH $fetch"
         return r
 
     }

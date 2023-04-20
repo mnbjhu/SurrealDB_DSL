@@ -18,7 +18,7 @@ import kotlin.time.Duration
 fun generateRecordTypeClass(element: KSClassDeclaration, resolver: Resolver, logger: KSPLogger): TypeSpec {
     val className = element.toClassName()
     val recordTypeName = "${className.simpleName}Record"
-    val generatedClassName = ClassName.bestGuess("$recordTypeName")
+    val generatedClassName = ClassName.bestGuess(recordTypeName)
     return TypeSpec.classBuilder(recordTypeName)
         .addModifiers(KModifier.VALUE)
         .addAnnotation(JvmInline::class)
@@ -262,7 +262,7 @@ class RecordFieldType(private val innerType: KSType): SurrealFieldType {
             .add(CodeBlock.of("linked("))
             .add("%M)", MemberName(
                 innerType.declaration.packageName.asString(),
-                innerType.toTypeName().toString() + "Table")
+                innerType.toTypeName().toString().replaceFirstChar(Char::lowercaseChar))
             )
             .build()
     }
