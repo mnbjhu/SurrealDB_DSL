@@ -3,34 +3,57 @@ package uk.gibby.dsl.core
 import io.ktor.util.reflect.*
 import uk.gibby.dsl.scopes.CodeBlockScope
 import uk.gibby.dsl.types.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.full.createType
 import kotlin.time.Duration
 
 abstract class Schema {
     abstract val tables: List<TableDefinition>
     abstract val scopes: List<Scope<*, *, *, *, *, *>>
-    val definition =
     fun getDefinitionQuery(): String {
         var definition = ""
+        tables.forEach {
+            definition += it.getDefinition()
+        }
         scopes.forEach {
             definition += it.getDefinition()
         }
         return definition
     }
-
 }
 
-fun <T, U: RecordType<T>>Table<T, U>.getDefinition(): TableDefinition {
-
-    TableDefinition(
-        name,
-        recordType::class.members.filter { it.returnType.instanceOf(Reference::class) }
-            .associate { it.name to FieldDefinition() }
-    )
+fun getTableDefinition(name: String, type: KType, reference: Reference<*>): TableDefinition {
+    return TableDefinition(name, getFieldDefinition(name, type, reference))
 }
 
-fun getFieldType(reference: Reference<*>): Map<String, FieldDefinition> {
-    when(reference) {
-
+fun getFieldDefinition(name: String, type: KType, reference: Reference<*>): Map<String, FieldDefinition> {
+    return when {
+        type.instanceOf(StringType::class) -> mapOf(name to FieldDefinition(FieldDefinition.Type.STRING, mutableMapOf(), mutableListOf()))
+        type.instanceOf(BooleanType::class) -> mapOf(name to FieldDefinition(FieldDefinition.Type.BOOLEAN, mutableMapOf(), mutableListOf()))
+        type.instanceOf(LongType::class) -> mapOf(name to FieldDefinition(FieldDefinition.Type.LONG, mutableMapOf(), mutableListOf()))
+        type.instanceOf(DoubleType::class) -> mapOf(name to FieldDefinition(FieldDefinition.Type.DOUBLE, mutableMapOf(), mutableListOf()))
+        type.instanceOf(DateTimeType::class) -> mapOf(name to FieldDefinition(FieldDefinition.Type.DATETIME, mutableMapOf(), mutableListOf()))
+        type.instanceOf(DurationType::class) -> mapOf(name to FieldDefinition(FieldDefinition.Type.DURATION, mutableMapOf(), mutableListOf()))
+        reference is RecordLink<*, *> -> {
+            mapOf(name to FieldDefinition(FieldDefinition.Type.RecordLink(type.), mutableMapOf(), mutableListOf()))
+        }
+        type.instanceOf(ListType::class) -> mutableMapOf(name to FieldDefinition(FieldDefinition.Type.ARRAY, mutableMapOf(), mutableListOf()))
+            .apply {
+                val inner = (reference as ListType<*, Reference<*>>).inner
+                val innerType = inner::class.createType()
+                putAll(getFieldDefinition("$name.*", innerType, inner))
+            }
+        type.instanceOf(ObjectType::class) -> {
+            val definition = mutableMapOf<String, FieldDefinition>()
+            definition[name] = FieldDefinition(FieldDefinition.Type.OBJECT, mutableMapOf(), mutableListOf())
+            val clazz = type.classifier as KClass<*>
+            clazz.members
+                .filter { it.returnType.instanceOf(Reference::class) }
+                .forEach { definition.putAll(getFieldDefinition("$name.${it.name}", it.returnType, it.call(reference) as Reference<*>)) }
+            return definition.toMap()
+        }
+        else -> throw Exception("Illegal Type: ${type.classifier}")
     }
 }
 
@@ -52,9 +75,16 @@ data class FieldDefinition(
     val permissions: MutableMap<PermissionType, String>,
     val assertions: MutableList<String>
 ) {
-    enum class Type(val text: String) {
-        BOOLEAN("bool"), STRING("string"), LONG("int"), DOUBLE("decimal"),
-        DATETIME("datetime"), DURATION("duration"), ARRAY("array"), OBJECT("object")
+    sealed class Type(val text: String) {
+        object BOOLEAN: Type("bool")
+        object STRING: Type("string")
+        object LONG: Type("int")
+        object DOUBLE: Type("decimal")
+        object DATETIME: Type("datetime")
+        object DURATION: Type("duration")
+        object ARRAY: Type("array")
+        object OBJECT: Type("object")
+        class RecordLink(tableName: String): Type("record($tableName)")
     }
     fun getDefinition(name: String, tableName: String): String {
         return "DEFINE FIELD $name ON TABLE $tableName TYPE ${type.text}" +

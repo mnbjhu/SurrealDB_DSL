@@ -6,6 +6,9 @@ import kotlinx.serialization.encodeToString
 import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.annotation.Table
 import uk.gibby.dsl.annotation.Relation
+import uk.gibby.dsl.core.Schema
+import uk.gibby.dsl.core.Scope
+import uk.gibby.dsl.core.TableDefinition
 import uk.gibby.dsl.core.insert
 import uk.gibby.dsl.driver.DatabaseConnection
 import uk.gibby.dsl.driver.surrealJson
@@ -133,3 +136,13 @@ data class User(
 
 @Relation<User, Product>
 class Has(val data: String)
+
+
+
+object MySchema: Schema(){
+    override val tables: List<TableDefinition>
+        get() = listOf(user, product)
+    override val scopes: List<Scope<*, *, *, *, *, *>>
+        get() = TODO("Not yet implemented")
+
+}
