@@ -1,6 +1,7 @@
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.annotation.Table
@@ -13,6 +14,7 @@ import uk.gibby.dsl.model.auth.RootAuth
 import uk.gibby.dsl.model.Linked
 import uk.gibby.dsl.types.*
 import kotlin.time.Duration
+
 
 @Table
 data class Test(
@@ -46,7 +48,7 @@ data class NewType(
 
 
 @Relation<User, Product>
-data class NewThing1(val data: String)
+data class NewThing(val data: String)
 
 
 fun main(){
@@ -103,8 +105,8 @@ fun main(){
                 "localhost",
                 Clock.System.now(),
                 3,
-                "test.Test Player 1",
-                "test.Test Player 2",
+                "Test Player 1",
+                "Test Player 2",
                 Color.Black
             )))
 

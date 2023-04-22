@@ -19,11 +19,7 @@ fun generateRelationType(element: KSClassDeclaration, resolver: Resolver, logger
     return TypeSpec.classBuilder(relationTypeName)
         .addModifiers(KModifier.VALUE)
         .addAnnotation(JvmInline::class)
-        .primaryConstructor(
-            FunSpec.constructorBuilder()
-                .addParameter("reference", String::class)
-                .build()
-        )
+        .addReferenceProperty()
         .addSuperinterface(
             RelationType::class.asClassName().parameterizedBy(
                 inType.toTypeName(),
@@ -33,26 +29,7 @@ fun generateRelationType(element: KSClassDeclaration, resolver: Resolver, logger
                 outRecordType
             )
         )
-        .addProperty(
-            PropertySpec.builder("reference", String::class)
-                .addModifiers(KModifier.PRIVATE)
-                .initializer("reference")
-                .build()
-        )
-        .addProperty(
-            PropertySpec.builder(
-                "id",
-                RecordLink::class.asClassName().parameterizedBy(className, generatedClassName)
-            )
-                .getter(
-                    FunSpec.getterBuilder()
-                        .addCode("return id()")
-                        .build()
-                )
-                .addModifiers(KModifier.OVERRIDE)
-                .build()
-        )
-
+        .addIdProperty(className, generatedClassName)
         .addProperty(
             PropertySpec.builder(
                 "in",
@@ -87,39 +64,8 @@ fun generateRelationType(element: KSClassDeclaration, resolver: Resolver, logger
                 .addModifiers(KModifier.OVERRIDE)
                 .build()
         )
-        .addFunction(
-            FunSpec.builder("getReference")
-                .returns(String::class)
-                .addModifiers(KModifier.OVERRIDE)
-                .addCode("return reference")
-                .build()
-        )
-        .addFunction(
-            FunSpec.builder("createReference")
-                .returns(ClassName.bestGuess(relationTypeName))
-                .addModifiers(KModifier.OVERRIDE)
-                .addParameter("ref", String::class)
-                .addCode("return $relationTypeName(ref)")
-                .build()
-        )
-        .apply {
-            element.getAllProperties()
-                .forEach { field ->
-                    val fieldName = field.simpleName.asString()
-                    val fieldType = getFieldType(field.type.resolve(), resolver, logger)
-                    addProperty(
-                        PropertySpec.builder(fieldName, fieldType.getSurrealType())
-                            .getter(
-                                FunSpec.getterBuilder()
-                                    .addCode("return attrOf(\"$fieldName\", ")
-                                    .addCode(fieldType.getSurrealTypeFunction())
-                                    .addCode(")")
-                                    .build()
-                            )
-                            .build()
-                    )
-                }
-        }
-
+        .addGetReferenceFunction()
+        .addCreateReferenceFunction(relationTypeName)
+        .addFields(element.getAllProperties(), resolver, logger)
         .build()
 }

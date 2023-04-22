@@ -5,6 +5,6 @@ import kotlinx.serialization.MetaSerializable
 
 @OptIn(ExperimentalSerializationApi::class)
 @Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.RUNTIME)
 @MetaSerializable
 annotation class Object

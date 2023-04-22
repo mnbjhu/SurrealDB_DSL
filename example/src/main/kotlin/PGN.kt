@@ -1,8 +1,6 @@
 import kotlinx.datetime.Instant
-import kotlinx.serialization.Serializable
 import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.annotation.Table
-
 
 @Object
 data class PGN(

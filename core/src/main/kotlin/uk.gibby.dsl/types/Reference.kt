@@ -27,4 +27,5 @@ fun <T, U: Reference<T>>nullable(inner: U) = NullableType<T, U>("_")
 
 infix fun <T, U: Reference<T>>U.eq(other: U) = BooleanType("(${getReference()} == ${other.getReference()})")
 inline infix fun <reified T> Reference<T>.eq(other: T) = BooleanType("(${getReference()} == ${surrealJson.encodeToString(other)})")
+fun Reference<*>.isNotNull() = BooleanType("(${getReference()} != NONE)")
 
