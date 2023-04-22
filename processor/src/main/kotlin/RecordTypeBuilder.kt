@@ -286,5 +286,6 @@ class ObjectFieldType(private val innerType: KSType): SurrealFieldType {
             )
             .build()
     }
-
 }
+
+

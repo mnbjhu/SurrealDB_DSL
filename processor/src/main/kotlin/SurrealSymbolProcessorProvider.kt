@@ -2,24 +2,24 @@ import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 import uk.gibby.dsl.annotation.Relation
 import uk.gibby.dsl.core.Table
+import uk.gibby.dsl.types.Reference
 
 class SurrealSymbolProcessorProvider: SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         return SurrealSymbolProcessor(environment.codeGenerator, environment.logger)
     }
 }
+
 class SurrealSymbolProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
+        val files = resolver.getAllFiles().forEach {  }
         buildObjectClasses(resolver)
         buildRecordClasses(resolver)
         buildRelationClasses(resolver)
@@ -79,7 +79,43 @@ class SurrealSymbolProcessor(val codeGenerator: CodeGenerator, val logger: KSPLo
             it as KSClassDeclaration
             val baseName = it.toClassName().simpleName
             val builder = FileSpec.builder(it.packageName.asString(), baseName + "Object")
-            builder.addType(generateObjectType(it, resolver, logger))
+            if(Modifier.ENUM in it.modifiers) {
+                val enumSpec = TypeSpec
+                    .classBuilder(baseName + "Object")
+                    .addAnnotation(JvmInline::class)
+                    .addModifiers(KModifier.VALUE)
+                    .primaryConstructor(
+                        FunSpec
+                            .constructorBuilder()
+                            .addParameter("reference", String::class)
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder("reference", String::class)
+                            .addModifiers(KModifier.PRIVATE)
+                            .initializer("reference")
+                            .build()
+                    )
+                    .addSuperinterface(Reference::class.asTypeName().parameterizedBy(it.toClassName()))
+                    .addFunction(
+                        FunSpec.builder("getReference")
+                            .addModifiers(KModifier.OVERRIDE)
+                            .returns(String::class)
+                            .addCode("return reference")
+                            .build()
+                    )
+                    .addFunction(
+                        FunSpec.builder("createReference")
+                            .addModifiers(KModifier.OVERRIDE)
+                            .addParameter("ref", String::class)
+                            .returns(ClassName(it.packageName.asString(), baseName + "Object"))
+                            .addCode("return ${baseName}Object(ref)")
+                            .build()
+                    )
+                    .build()
+                    builder.addType(enumSpec)
+            }
+            else builder.addType(generateObjectType(it, resolver, logger))
             builder.addProperty(
                 PropertySpec.builder(
                     it.toClassName().simpleName + "Type",
@@ -92,5 +128,11 @@ class SurrealSymbolProcessor(val codeGenerator: CodeGenerator, val logger: KSPLo
             spec.writeTo(codeGenerator, true)
         }
     }
+
+    inner class FindClassesVisitor: KSVisitorVoid() {
+        override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
+        }
+    }
+
 }
 

@@ -1,11 +1,13 @@
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.encodeToString
 import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.annotation.Table
 import uk.gibby.dsl.annotation.Relation
 import uk.gibby.dsl.core.insert
 import uk.gibby.dsl.driver.DatabaseConnection
+import uk.gibby.dsl.driver.surrealJson
 import uk.gibby.dsl.functions.*
 import uk.gibby.dsl.model.auth.RootAuth
 import uk.gibby.dsl.model.Linked
@@ -35,11 +37,16 @@ data class MyThing(
 )
 
 @Table
-data class NewType(val myDouble: Double, val myLong: Long, val myDuration: Duration, val myDateTime: Instant)
+data class NewType(
+    val myDouble: Double,
+    val myLong: Long,
+    val myDuration: Duration,
+    val myDateTime: Instant
+)
 
 
 @Relation<User, Product>
-data class NewThing(val data: String)
+data class NewThing1(val data: String)
 
 
 fun main(){
@@ -90,9 +97,25 @@ fun main(){
             }
             +user["james"].create(User("mnbjhu", "password123", listOf()))
             +user["james"].selectAll()
-            product.insert(Product("apple"), Product("orange"), Product("pear"))
+            +product.insert(Product("apple"), Product("orange"), Product("pear"))
+            game.create(Game(PGN(
+                "test.Test Event",
+                "localhost",
+                Clock.System.now(),
+                3,
+                "test.Test Player 1",
+                "test.Test Player 2",
+                Color.Black
+            )))
+
         }.forEach { println(it) }
     }
+}
+
+
+@Object
+enum class TestEnum {
+    First, Second
 }
 
 

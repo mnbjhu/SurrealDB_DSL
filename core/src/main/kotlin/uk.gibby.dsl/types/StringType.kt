@@ -8,3 +8,4 @@ value class StringType(private val reference: String): Reference<String>, Surrea
     override fun createReference(ref: String): Reference<String> = StringType(ref)
 }
 val stringType = StringType("_")
+
