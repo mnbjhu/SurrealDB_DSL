@@ -6,50 +6,43 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 import uk.gibby.dsl.annotation.Relation
 import uk.gibby.dsl.core.Table
+import uk.gibby.dsl.types.EnumType
 import uk.gibby.dsl.types.Reference
 
 class SurrealSymbolProcessorProvider: SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
+        environment.logger.warn(environment.options.toString())
         return SurrealSymbolProcessor(environment.codeGenerator, environment.logger)
     }
 }
 
+val processed = mutableSetOf<KSClassDeclaration>()
+var schemaProcessed = false
+
 class SurrealSymbolProcessor(private val codeGenerator: CodeGenerator, private val logger: KSPLogger) : SymbolProcessor {
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        resolver.getNewFiles().forEach { file ->
-            val tableDeclarations = file.declarations.filter { declaration ->
-                declaration.annotations.any {
-                    it.annotationType
-                        .resolve()
-                        .starProjection()
-                        .isAssignableFrom<uk.gibby.dsl.annotation.Table>(resolver)
-                }
-            }.map { it as KSClassDeclaration }
-            buildRecordClasses(codeGenerator, resolver, logger, tableDeclarations)
-            val objectDeclarations = file.declarations.filter { declaration ->
-                declaration.annotations.any {
-                    it.annotationType
-                        .resolve()
-                        .starProjection()
-                        .isAssignableFrom<uk.gibby.dsl.annotation.Object>(resolver)
-                }
-            }.map { it as KSClassDeclaration }
-            buildObjectClasses(codeGenerator, resolver, logger, objectDeclarations)
-            val relationDeclarations = file.declarations.filter { declaration ->
-                declaration.annotations.any {
-                    it.annotationType
-                        .resolve()
-                        .starProjection()
-                        .isAssignableFrom<Relation<*, *>>(resolver)
-                }
-            }.map { it as KSClassDeclaration }
-            buildRelationClasses(codeGenerator, resolver, logger, relationDeclarations)
-        }
+        logger.warn(resolver.getSymbolsWithAnnotation("uk.gibby.dsl.annotation.Table").joinToString { (it as KSClassDeclaration).simpleName.asString() })
+        val tableDeclarations = resolver.getSymbolsWithAnnotation("uk.gibby.dsl.annotation.Table").map { it as KSClassDeclaration }
+        val relationDeclarations = resolver.getSymbolsWithAnnotation("uk.gibby.dsl.annotation.Relation").map { it as KSClassDeclaration }
+        val objectDeclarations = resolver.getSymbolsWithAnnotation("uk.gibby.dsl.annotation.Object").map { it as KSClassDeclaration }
+        buildObjectClasses(codeGenerator, resolver, logger, objectDeclarations.filter { it !in processed })
+        buildRecordClasses(codeGenerator, resolver, logger, tableDeclarations.filter { it !in processed })
+        buildRelationClasses(codeGenerator, resolver, logger, relationDeclarations.filter { it !in processed })
+        if(!schemaProcessed) buildSchema(tableDeclarations + relationDeclarations).writeTo(codeGenerator, false).also { schemaProcessed = true }
         return listOf()
     }
 }
 
-
+inline fun <reified T>Sequence<KSDeclaration>.getClassesAnnotatedBy(resolver: Resolver): Sequence<KSClassDeclaration>{
+   return filter { declaration ->
+        declaration.annotations.any {
+            it.annotationType
+                .resolve()
+                .starProjection()
+                .isAssignableFrom<Relation<*, *>>(resolver)
+        }
+    }.map { it as KSClassDeclaration }
+}
 
 fun buildRelationClasses(codeGenerator: CodeGenerator, resolver: Resolver, logger: KSPLogger, classes: Sequence<KSClassDeclaration>) {
     classes.forEach {
@@ -70,10 +63,11 @@ fun buildRelationClasses(codeGenerator: CodeGenerator, resolver: Resolver, logge
                 .build()
         )
         val spec = builder.build()
-        spec.writeTo(codeGenerator, true)
+        spec.writeTo(codeGenerator, false, listOf(it.containingFile!!))
     }
 }
 fun buildRecordClasses(codeGenerator: CodeGenerator, resolver: Resolver, logger: KSPLogger, classes: Sequence<KSClassDeclaration>) {
+    val tables = mutableListOf<TypeName>()
     classes.forEach {
         val baseName = it.toClassName().simpleName
         val builder = FileSpec.builder(it.packageName.asString(), baseName + "Type")
@@ -86,11 +80,11 @@ fun buildRecordClasses(codeGenerator: CodeGenerator, resolver: Resolver, logger:
                     ClassName(it.packageName.asString(), baseName + "Record")
                 )
             )
-                .initializer("Table(\"$baseName\", ${baseName}Record(\"_\"))")
-                .build()
+            .initializer("Table(\"$baseName\", ${baseName}Record(\"_\"))")
+            .build()
         )
         val spec = builder.build()
-        spec.writeTo(codeGenerator, true)
+        spec.writeTo(codeGenerator, false, listOf(it.containingFile!!))
     }
 }
 private fun buildObjectClasses(codeGenerator: CodeGenerator, resolver: Resolver, logger: KSPLogger, classes: Sequence<KSClassDeclaration>) {
@@ -114,7 +108,7 @@ private fun buildObjectClasses(codeGenerator: CodeGenerator, resolver: Resolver,
                         .initializer("reference")
                         .build()
                 )
-                .addSuperinterface(Reference::class.asTypeName().parameterizedBy(it.toClassName()))
+                .addSuperinterface(EnumType::class.asTypeName().parameterizedBy(it.toClassName()))
                 .addFunction(
                     FunSpec.builder("getReference")
                         .addModifiers(KModifier.OVERRIDE)
@@ -143,6 +137,6 @@ private fun buildObjectClasses(codeGenerator: CodeGenerator, resolver: Resolver,
                 .build()
         )
         val spec = builder.build()
-        spec.writeTo(codeGenerator, true)
+        spec.writeTo(codeGenerator, false, listOf(it.containingFile!!))
     }
 }

@@ -1,68 +1,20 @@
 package uk.gibby.dsl.serialization
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.elementDescriptors
+import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import uk.gibby.dsl.driver.surrealJson
 import uk.gibby.dsl.model.Linked
+import uk.gibby.dsl.model.rpc.RpcResponse
 
-@Serializable(with = ServiceResultSerializer::class)
-sealed class ServiceResult<out T : Any> {
-    data class Success<out T : Any>(val data: T) : ServiceResult<T>()
-    data class Error(val exceptionMessage: String?) : ServiceResult<Nothing>()
-}
-
-class ServiceResultSerializer<T : Any>(
-    tSerializer: KSerializer<T>
-) : KSerializer<ServiceResult<T>> {
-    @Serializable
-    @SerialName("ServiceResult")
-    data class ServiceResultSurrogate<T : Any> @OptIn(ExperimentalSerializationApi::class) constructor(
-        val type: Type,
-        // The annotation is not necessary, but it avoids serializing "data = null"
-        // for "Error" results.
-        @EncodeDefault(EncodeDefault.Mode.NEVER)
-        val data: T? = null,
-        @EncodeDefault(EncodeDefault.Mode.NEVER)
-        val exceptionMessage: String? = null
-    ) {
-        enum class Type { SUCCESS, ERROR }
-    }
-
-    private val surrogateSerializer = ServiceResultSurrogate.serializer(tSerializer)
-
-    override val descriptor: SerialDescriptor = surrogateSerializer.descriptor
-
-    override fun deserialize(decoder: Decoder): ServiceResult<T> {
-        val surrogate = surrogateSerializer.deserialize(decoder)
-        return when (surrogate.type) {
-            ServiceResultSurrogate.Type.SUCCESS ->
-                if (surrogate.data != null)
-                    ServiceResult.Success(surrogate.data)
-                else
-                    throw SerializationException("Missing data for successful result")
-            ServiceResultSurrogate.Type.ERROR ->
-                ServiceResult.Error(surrogate.exceptionMessage)
-        }
-    }
-
-    override fun serialize(encoder: Encoder, value: ServiceResult<T>) {
-        val surrogate = when (value) {
-            is ServiceResult.Error -> ServiceResultSurrogate(
-                ServiceResultSurrogate.Type.ERROR,
-                exceptionMessage = value.exceptionMessage
-            )
-            is ServiceResult.Success -> ServiceResultSurrogate(
-                ServiceResultSurrogate.Type.SUCCESS,
-                data = value.data
-            )
-        }
-        surrogateSerializer.serialize(encoder, surrogate)
-    }
-}
 
 
 class LinkedSerializer<T : Any>(
@@ -93,4 +45,37 @@ class LinkedSerializer<T : Any>(
     override fun serialize(encoder: Encoder, value: Linked<T>) {
         TODO()
     }
+}
+
+
+
+class RpcResponseSerializer() : KSerializer<RpcResponse> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("rpc") {
+        element("id", String.serializer().descriptor)
+        element("result", JsonElement.serializer().descriptor)
+        element("error", JsonElement.serializer().descriptor)
+    }
+    override fun deserialize(decoder: Decoder): RpcResponse {
+        var id: String? = null
+        var result: JsonElement? = null
+        var error: JsonElement? = null
+        decoder.decodeStructure(descriptor){
+            while (true) {
+                when(val index = decodeElementIndex(descriptor)) {
+                    0 -> id = decodeStringElement(descriptor, 0)
+                    1 -> result = decodeSerializableElement(descriptor, 0, JsonElement.serializer())
+                    2 -> error = decodeSerializableElement(descriptor, 0, JsonElement.serializer())
+                    CompositeDecoder.DECODE_DONE -> break
+                }
+            }
+        }
+        return if(error != null) {
+            RpcResponse.Error(id!!, surrealJson.encodeToJsonElement(error))
+        } else RpcResponse.Success(id!!, result ?: surrealJson.encodeToJsonElement(String.serializer().nullable, null))
+    }
+
+    override fun serialize(encoder: Encoder, value: RpcResponse) {
+        TODO("Not yet implemented")
+    }
+
 }

@@ -13,5 +13,6 @@ val Client = HttpClient(CIO) {
 }
 
 val surrealJson = Json {
+    classDiscriminator = "status"
     ignoreUnknownKeys = true
 }

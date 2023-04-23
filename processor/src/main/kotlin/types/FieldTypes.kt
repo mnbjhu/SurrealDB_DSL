@@ -1,6 +1,9 @@
+package types
+
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSType
+import isAssignableFrom
 import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.model.Linked
 

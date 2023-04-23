@@ -8,10 +8,10 @@ import uk.gibby.dsl.scopes.SetScope
 import uk.gibby.dsl.types.*
 
 data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
-    fun delete(deleteScope: context(FilterScope) U.() -> Unit = {}): NullableType<String, StringType> {
+    fun delete(deleteScope: context(FilterScope) U.() -> Unit = {}): ListType<String?, NullableType<String, StringType>> {
         val filter = FilterScopeImpl()
         filter.deleteScope(recordType)
-        return NullableType("DELETE FROM $name${filter.getFilterString()}")
+        return ListType(NullableType("_", stringType), "DELETE FROM $name${filter.getFilterString()}")
     }
 
     fun selectAll(selectScope: context(FilterScope) U.() -> Unit = {}): ListType<T, U> {

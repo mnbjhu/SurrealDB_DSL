@@ -7,6 +7,7 @@ import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.toClassName
+import types.getFieldType
 import uk.gibby.dsl.types.RecordLink
 import uk.gibby.dsl.types.RecordType
 import kotlin.reflect.KClass

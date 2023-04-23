@@ -2,6 +2,17 @@ package uk.gibby.dsl.model.rpc
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import uk.gibby.dsl.serialization.RpcResponseSerializer
 
-@Serializable
-data class RpcResponse(val id: String, val result: JsonElement)
+@Serializable(with = RpcResponseSerializer::class)
+sealed class RpcResponse {
+
+    abstract val id: String
+
+    @Serializable
+    data class Success(override val id: String, val result: JsonElement): RpcResponse()
+
+    @Serializable
+    data class Error(override val id: String, val error: JsonElement): RpcResponse()
+}
+

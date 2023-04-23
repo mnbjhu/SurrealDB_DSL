@@ -3,6 +3,11 @@ package uk.gibby.dsl.scopes
 import uk.gibby.dsl.types.Reference
 import kotlin.reflect.KProperty
 
+
+open class StatementScope {
+}
+
+
 class CodeBlockScope {
     private var generated: String = "{\n"
     operator fun Reference<*>.unaryPlus(){

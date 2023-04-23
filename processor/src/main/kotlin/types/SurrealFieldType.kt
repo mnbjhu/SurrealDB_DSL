@@ -1,3 +1,5 @@
+package types
+
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.TypeName
 

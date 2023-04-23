@@ -1,7 +1,5 @@
-package test
-
 import uk.gibby.dsl.annotation.Table
 
 
 @Table
-data class Test(val x: Double)
+data class Test1(val x: Double)
