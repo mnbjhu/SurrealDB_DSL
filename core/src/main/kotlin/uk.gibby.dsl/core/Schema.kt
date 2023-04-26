@@ -10,9 +10,21 @@ import kotlin.reflect.full.isSubtypeOf
 import kotlin.time.Duration
 
 abstract class Schema {
+
+    fun init(){
+        if(!isInitialized){
+            with(SchemaScope()){
+                configure()
+            }
+            isInitialized = true
+        }
+    }
+
+    private var isInitialized = false
     abstract val tables: List<TableDefinition>
     abstract val scopes: List<Scope<*, *, *, *, *, *>>
     fun getDefinitionQuery(): String {
+        init()
         var definition = "BEGIN TRANSACTION;\n"
         tables.forEach {
             definition += "${it.getDefinition()}\n"
@@ -22,16 +34,17 @@ abstract class Schema {
         }
         return "$definition\nCOMMIT TRANSACTION;"
     }
-    abstract fun SchemaScope.configure()
+    open fun SchemaScope.configure() {}
     inner class SchemaScope {
-        fun <T, U: RecordType<T>, c, C: RecordType<c>>Table<T, U>.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: (C) -> BooleanType){
+        fun <T, U: RecordType<T>, c, C: RecordType<c>>Table<T, U>.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: C.() -> BooleanType){
+            println(tables)
             val definition = tables.first { it.name == name }
             types.forEach {
                 val current = definition.permissions.getOrPut(it) {
-                    "IF "
+                    ""
                 }
-                val token = recordType.createReference("\$auth")
-                current + "(\$scope == \"${`for`.name}\") $(`when`(}"
+                val token = recordType.createReference("\$auth") as C
+                definition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN ${token.`when`().getReference()} ELSE "
             }
         }
     }
@@ -107,9 +120,10 @@ class TableDefinition(
     val permissions: MutableMap<PermissionType, String> = mutableMapOf(),
 ) {
     fun getDefinition(): String {
-        return "DEFINE TABLE $name SCHEMAFULL;\n" +
+        return "DEFINE TABLE $name SCHEMAFULL" +
                 ( if(permissions.isNotEmpty())
-                    "\nPERMISSIONS \n${permissions.entries.joinToString("\n"){ "FOR ${it.key.name}\n${it.value}" }}" else "" ) +
+                    "\nPERMISSIONS \n${permissions.entries.joinToString("\n"){ "FOR ${it.key.text} WHERE ${it.value}FALSE END" }}" else "" ) +
+                ";" +
                 fields.entries.joinToString("\n"){ it.value.getDefinition(it.key, name) }
     }
 }
@@ -166,6 +180,6 @@ abstract class Scope<a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>
         val condition: CodeBlockScope.(C) -> BooleanType
     )
 }
-enum class PermissionType {
-    Create, Update, Select, Delete
+enum class PermissionType(val text: String) {
+    Create("create"), Update("update"), Select("select"), Delete("delete")
 }

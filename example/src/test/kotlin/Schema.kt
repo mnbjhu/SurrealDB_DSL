@@ -1,9 +1,5 @@
 import kotlinx.datetime.Instant
 import uk.gibby.dsl.annotation.*
-import uk.gibby.dsl.core.Schema
-import uk.gibby.dsl.core.Scope
-import uk.gibby.dsl.core.TableDefinition
-import uk.gibby.dsl.core.getDefinition
 import uk.gibby.dsl.model.Linked
 import kotlin.time.Duration
 
@@ -61,13 +57,6 @@ class Has(val data: String)
 
 
 
-object MySchema: Schema(){
-    override val tables: List<TableDefinition>
-        get() = listOf(user.getDefinition(), product.getDefinition())
-    override val scopes: List<Scope<*, *, *, *, *, *>>
-        get() = listOf(LoggedInScope)
-
-}
 
 @Object
 data class UserCredentials(val username: String, val password: String)
