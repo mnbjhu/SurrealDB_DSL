@@ -1,7 +1,6 @@
 import kotlinx.coroutines.runBlocking
+import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.Test
-import uk.gibby.dsl.driver.DatabaseConnection
-import uk.gibby.dsl.model.auth.RootAuth
 
 class UserTest: RootTest(){
     init {
@@ -15,18 +14,7 @@ class UserTest: RootTest(){
     fun signUpTest() {
         runBlocking {
             db.signUp("test", "test", LoggedInScope, UserCredentials("testuser", "testpass"))
-            db.transaction { user.selectAll() }
-        }
-    }
-}
-
-class SimpleTest{
-    @Test
-    fun signUpTest() {
-        runBlocking {
-            val db = DatabaseConnection("localhost")
-            db.connect()
-            db.signUp("test", "test", LoggedInScope, UserCredentials("testuser", "testpass"))
-        }
+            db.transaction { user.selectAll() } `should be equal to` listOf()
+        } `should be equal to` listOf()
     }
 }

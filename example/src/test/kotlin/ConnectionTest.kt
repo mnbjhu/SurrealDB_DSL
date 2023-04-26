@@ -1,8 +1,15 @@
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.Test
+import uk.gibby.dsl.core.PermissionType
+import uk.gibby.dsl.core.PermissionType.*
+import uk.gibby.dsl.core.Schema
+import uk.gibby.dsl.core.TableDefinition
+import uk.gibby.dsl.core.getDefinition
 import uk.gibby.dsl.driver.DatabaseConnection
 import uk.gibby.dsl.model.auth.RootAuth
+import uk.gibby.dsl.types.eq
+import kotlin.test.assertFails
 
 class ConnectionTest {
 
@@ -60,10 +67,19 @@ class ConnectionTest {
             db.removeNamespace("test_namespace")
             db.defineNamespace("test_namespace")
             db.invalidate()
-            db.removeNamespace("test_namespace")
+            assertFails { db.removeNamespace("test_namespace") }
         }
     }
 }
-object NewSchema: TypedSchema() {
+object NewSchema: Schema() {
     override val scopes = listOf(LoggedInScope)
+    override val tables: List<TableDefinition> = listOf(
+        user.getDefinition(),
+        product.getDefinition()
+    )
+    override fun SchemaScope.configure() {
+        user.permissions(LoggedInScope, Create, Select){
+            username eq "mnbjhu"
+        }
+    }
 }

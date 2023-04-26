@@ -29,13 +29,15 @@ import uk.gibby.dsl.types.RecordType
 import uk.gibby.dsl.types.Reference
 import java.util.concurrent.CancellationException
 
-class DatabaseConnection(private val host: String, private val port: Int = 8000, ) {
+class DatabaseConnection(private val host: String, private val port: Int = 8000) {
 
     private var count = 0L
     private var connection: DefaultClientWebSocketSession? = null
     private val requests = ConcurrentMap<String, Channel<JsonElement>>()
     private val context = CoroutineScope(Dispatchers.IO)
+
     suspend fun connect() {
+        connection?.cancel()
         connection = Client.webSocketSession(method = HttpMethod.Get, host = host, port = port, path = "/rpc").also {
             context.launch {
                 it.incoming.receiveAsFlow().collect {
