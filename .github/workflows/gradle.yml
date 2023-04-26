@@ -15,8 +15,7 @@ jobs:
         image: surrealdb/surrealdb:latest
         ports:
           - 8000:8000
-        run:
-          start
+        run: start
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
