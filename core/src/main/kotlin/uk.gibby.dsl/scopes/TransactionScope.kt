@@ -1,7 +1,6 @@
 package uk.gibby.dsl.scopes
 
 import kotlinx.serialization.encodeToString
-import sun.reflect.generics.tree.ReturnType
 import uk.gibby.dsl.core.Table
 import uk.gibby.dsl.driver.surrealJson
 import uk.gibby.dsl.types.ListType
