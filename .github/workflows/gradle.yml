@@ -8,14 +8,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    services:
-      surreal:
-        image: surrealdb/surrealdb:latest
-        ports:
-          - 8000:8000
-        run: start
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -23,6 +16,8 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
+      - name: Start Surreal
+        run: sh ./scripts/start_surreal.sh
       - name: Build with Gradle
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
