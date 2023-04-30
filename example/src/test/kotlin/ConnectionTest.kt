@@ -7,7 +7,11 @@ import uk.gibby.dsl.core.Schema
 import uk.gibby.dsl.core.TableDefinition
 import uk.gibby.dsl.core.getDefinition
 import uk.gibby.dsl.driver.DatabaseConnection
+import uk.gibby.dsl.functions.length
+import uk.gibby.dsl.functions.lessThan
 import uk.gibby.dsl.model.auth.RootAuth
+import uk.gibby.dsl.types.BooleanType
+import uk.gibby.dsl.types.BooleanType.Companion.FALSE
 import uk.gibby.dsl.types.eq
 import kotlin.test.assertFails
 
@@ -80,6 +84,11 @@ object NewSchema: Schema() {
     override fun SchemaScope.configure() {
         user.permissions(LoggedInScope, Create, Select){
             username eq "mnbjhu"
+        }
+        user.configureFields {
+            username.permissions(LoggedInScope, Select){ auth ->
+                FALSE
+            }
         }
     }
 }

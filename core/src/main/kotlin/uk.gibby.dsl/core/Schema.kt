@@ -35,9 +35,15 @@ abstract class Schema {
         return "$definition\nCOMMIT TRANSACTION;"
     }
     open fun SchemaScope.configure() {}
+
     inner class SchemaScope {
+
+        fun <T, U: RecordType<T>>Table<T, U>.configureFields(
+            configuration: context(TableDefinitionScope) U.() -> Unit
+        ) {
+            configuration(TableDefinitionScope(this), recordType)
+        }
         fun <T, U: RecordType<T>, c, C: RecordType<c>>Table<T, U>.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: C.() -> BooleanType){
-            println(tables)
             val definition = tables.first { it.name == name }
             types.forEach {
                 val current = definition.permissions.getOrPut(it) {
@@ -47,8 +53,38 @@ abstract class Schema {
                 definition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN ${token.`when`().getReference()} ELSE "
             }
         }
+
+/*
+        fun <T, U: RecordType<T>>Table<T, U>.assert(){
+            val definition = tables.first { it.name == name }
+            definition
+        }
+ */
     }
+
+    inner class TableDefinitionScope(private val definition: TableDefinition) {
+        constructor(table: Table<*, *>): this(tables.first { it.name == table.name })
+        fun <T, U: Reference<T>>U.assert(condition: (U) -> BooleanType): U {
+            val assertion = condition(createReference("\$value") as U).getReference()
+            definition.fields[getReference()]!!.assertions.add(assertion)
+            return this
+        }
+
+        fun <T, U: Reference<T>, c, C: RecordType<c>>U.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: (C) -> BooleanType){
+            val fieldDefinition = definition.fields[getReference()]!!
+            types.forEach {
+                val current = fieldDefinition.permissions.getOrPut(it) {
+                    ""
+                }
+                val token = `for`.tokenTable.recordType.createReference("\$auth") as C
+                fieldDefinition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN ${`when`(token).getReference()} ELSE "
+            }
+        }
+    }
+
 }
+
+
 
 fun getTableDefinition(name: String, type: KType, reference: Reference<*>): TableDefinition {
     val definition = mutableMapOf<String, FieldDefinition>()
@@ -116,7 +152,7 @@ fun getFieldDefinition(name: String, type: KType, reference: Reference<*>): Map<
 
 class TableDefinition(
     val name: String,
-    private val fields: Map<String, FieldDefinition>,
+    val fields: MutableMap<String, FieldDefinition>,
     val permissions: MutableMap<PermissionType, String> = mutableMapOf(),
 ) {
     fun getDefinition(): String {
@@ -148,7 +184,7 @@ data class FieldDefinition(
         return "DEFINE FIELD $name ON TABLE $tableName TYPE ${type.text}" +
                 ( if(assertions.isNotEmpty()) "\nASSERT ${assertions.joinToString(" AND "){ it }}" else "" ) +
                 ( if(permissions.isNotEmpty())
-                    "\nPERMISSIONS \n${permissions.entries.joinToString("\n"){ "FOR ${it.key.name}\n${it.value}" }}" else "" ) +
+                    "\nPERMISSIONS \n${permissions.entries.joinToString("\n"){ "FOR ${it.key.text} WHERE ${it.value}FALSE END" }}" else "" ) +
                 ";"
 
     }
@@ -159,7 +195,7 @@ abstract class Scope<a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>
     private val sessionDuration: Duration,
     private val signupType: A,
     private val signInType: B,
-    private val tokenTable: Table<c, C>
+    internal val tokenTable: Table<c, C>
 ) {
     abstract fun signUp(auth: A): ListType<c, C>
     abstract fun signIn(auth: B): ListType<c, C>
