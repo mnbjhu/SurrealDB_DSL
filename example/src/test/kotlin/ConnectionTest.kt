@@ -75,20 +75,19 @@ class ConnectionTest {
         }
     }
 }
-object NewSchema: Schema() {
+object NewSchema: Schema(user, product) {
     override val scopes = listOf(LoggedInScope)
-    override val tables: List<TableDefinition> = listOf(
-        user.getDefinition(),
-        product.getDefinition()
-    )
     override fun SchemaScope.configure() {
         user.permissions(LoggedInScope, Create, Select){
             username eq "mnbjhu"
         }
         user.configureFields {
+            /*
             username.permissions(LoggedInScope, Select){ auth ->
                 FALSE
             }
+            TODO("Causes issues with the 'SELECT' statement")
+             */
         }
     }
 }

@@ -1,6 +1,12 @@
+package e2e
+
+import LoggedInScope
+import NewSchema
+import UserCredentials
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.Test
+import user
 
 class UserTest: RootTest() {
     init {

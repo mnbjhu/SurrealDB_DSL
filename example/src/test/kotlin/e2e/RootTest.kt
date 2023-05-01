@@ -1,6 +1,10 @@
+package e2e
+
 import kotlinx.coroutines.runBlocking
+import product
 import uk.gibby.dsl.driver.DatabaseConnection
 import uk.gibby.dsl.model.auth.RootAuth
+import user
 
 abstract class RootTest {
 

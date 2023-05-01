@@ -28,7 +28,7 @@ class SurrealSymbolProcessor(private val codeGenerator: CodeGenerator, private v
         buildObjectClasses(codeGenerator, resolver, logger, objectDeclarations.filter { it !in processed })
         buildRecordClasses(codeGenerator, resolver, logger, tableDeclarations.filter { it !in processed })
         buildRelationClasses(codeGenerator, resolver, logger, relationDeclarations.filter { it !in processed })
-        if(!schemaProcessed) buildSchema(tableDeclarations + relationDeclarations).writeTo(codeGenerator, false).also { schemaProcessed = true }
+        // if(!schemaProcessed) buildSchema(tableDeclarations + relationDeclarations).writeTo(codeGenerator, false).also { schemaProcessed = true }
         return listOf()
     }
 }

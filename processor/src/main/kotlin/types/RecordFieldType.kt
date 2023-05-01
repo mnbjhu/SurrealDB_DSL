@@ -21,11 +21,20 @@ class RecordFieldType(private val innerType: KSType): SurrealFieldType {
     }
 
     override fun getSurrealTypeFunction(): CodeBlock {
+        val original = innerType.toTypeName().toString()
+        val index = original.lastIndexOf(".")
+        val name = if(index == -1){
+            original.replaceFirstChar(Char::lowercaseChar)
+        } else {
+            original.take(index) + "." + original.takeLastWhile { it != '.' }.replaceFirstChar(Char::lowercaseChar)
+        }
+
+
         return CodeBlock.builder()
             .add(CodeBlock.of("linked("))
             .add("%M)", MemberName(
                 innerType.declaration.packageName.asString(),
-                innerType.toTypeName().toString().replaceFirstChar(Char::lowercaseChar)
+                name
             )
             )
             .build()

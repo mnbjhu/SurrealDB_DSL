@@ -1,3 +1,4 @@
+import e2e.RootTest
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.`should contain same`
 import org.junit.jupiter.api.Test

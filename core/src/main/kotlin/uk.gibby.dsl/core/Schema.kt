@@ -2,6 +2,7 @@ package uk.gibby.dsl.core
 
 import uk.gibby.dsl.scopes.CodeBlockScope
 import uk.gibby.dsl.types.*
+import uk.gibby.dsl.types.BooleanType.Companion.FALSE
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
@@ -9,8 +10,9 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.time.Duration
 
-abstract class Schema {
+abstract class Schema(tables: List<Table<*, *>>) {
 
+    constructor(vararg tables: Table<*, *>): this(tables.toList())
     fun init(){
         if(!isInitialized){
             with(SchemaScope()){
@@ -21,8 +23,8 @@ abstract class Schema {
     }
 
     private var isInitialized = false
-    abstract val tables: List<TableDefinition>
-    abstract val scopes: List<Scope<*, *, *, *, *, *>>
+    val tables: List<TableDefinition> = tables.map { it.getDefinition() }
+    open val scopes: List<Scope<*, *, *, *, *, *>> = listOf()
     fun getDefinitionQuery(): String {
         init()
         var definition = "BEGIN TRANSACTION;\n"
@@ -43,17 +45,33 @@ abstract class Schema {
         ) {
             configuration(TableDefinitionScope(this), recordType)
         }
-        fun <T, U: RecordType<T>, c, C: RecordType<c>>Table<T, U>.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: C.() -> BooleanType){
+        fun <T, U: RecordType<T>, c, C: RecordType<c>>Table<T, U>.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: U.(C) -> BooleanType): Table<T, U>{
             val definition = tables.first { it.name == name }
             types.forEach {
-                val current = definition.permissions.getOrPut(it) {
-                    ""
-                }
+                val current = definition.permissions.getOrPut(it) { "" }
                 val token = recordType.createReference("\$auth") as C
-                definition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN ${token.`when`().getReference()} ELSE "
+                definition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN ${recordType.`when`(token).getReference()} ELSE "
             }
+            return this
         }
 
+        fun <T, U: RecordType<T>>Table<T, U>.noPermissionsFor(`for`: Scope<*, *, *, *, *, *>, vararg types: PermissionType): Table<T, U> {
+            val definition = tables.first { it.name == name }
+            types.forEach {
+                val current = definition.permissions.getOrPut(it) { "" }
+                definition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN FALSE ELSE "
+            }
+            return this
+        }
+
+        fun <T, U: RecordType<T>>Table<T, U>.fullPermissionsFor(`for`: Scope<*, *, *, *, *, *>, vararg types: PermissionType): Table<T, U> {
+            val definition = tables.first { it.name == name }
+            types.forEach {
+                val current = definition.permissions.getOrPut(it) { "" }
+                definition.permissions[it] = current + "IF (\$scope == \"${`for`.name}\") THEN TRUE ELSE "
+            }
+            return this
+        }
 /*
         fun <T, U: RecordType<T>>Table<T, U>.assert(){
             val definition = tables.first { it.name == name }
@@ -68,6 +86,13 @@ abstract class Schema {
             val assertion = condition(createReference("\$value") as U).getReference()
             definition.fields[getReference()]!!.assertions.add(assertion)
             return this
+        }
+
+        fun defineIndex(name: String, vararg fields: Reference<*>) {
+            definition.indexes.add("DEFINE INDEX $name ON ${definition.name} FIELDS ${fields.joinToString { it.getReference() }};")
+        }
+        fun defineUniqueIndex(name: String, vararg fields: Reference<*>) {
+            definition.indexes.add("DEFINE INDEX $name ON ${definition.name} FIELDS ${fields.joinToString { it.getReference() }} UNIQUE;")
         }
 
         fun <T, U: Reference<T>, c, C: RecordType<c>>U.permissions(`for`: Scope<*, *, *, *, c, C>, vararg types: PermissionType, `when`: (C) -> BooleanType){
@@ -97,7 +122,7 @@ fun getTableDefinition(name: String, type: KType, reference: Reference<*>): Tabl
         .forEach { definition.putAll(getFieldDefinition(it.name, it.returnType, it.call(reference) as Reference<*>)) }
     return TableDefinition(name, definition)
 }
-inline fun <reified T, U: RecordType<T>>Table<T, U>.getDefinition(): TableDefinition {
+fun Table<*, *>.getDefinition(): TableDefinition {
     return getTableDefinition(name, recordType::class.createType(), recordType)
 }
 
@@ -154,13 +179,15 @@ class TableDefinition(
     val name: String,
     val fields: MutableMap<String, FieldDefinition>,
     val permissions: MutableMap<PermissionType, String> = mutableMapOf(),
+    val indexes: MutableList<String> = mutableListOf()
 ) {
     fun getDefinition(): String {
         return "DEFINE TABLE $name SCHEMAFULL" +
                 ( if(permissions.isNotEmpty())
                     "\nPERMISSIONS \n${permissions.entries.joinToString("\n"){ "FOR ${it.key.text} WHERE ${it.value}FALSE END" }}" else "" ) +
-                ";" +
-                fields.entries.joinToString("\n"){ it.value.getDefinition(it.key, name) }
+                ";\n" +
+                fields.entries.joinToString("\n"){ it.value.getDefinition(it.key, name) } + "\n" +
+                indexes.joinToString("\n")
     }
 }
 
@@ -188,6 +215,32 @@ data class FieldDefinition(
                 ";"
 
     }
+}
+
+fun <a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>>scopeOf(
+    name: String,
+    sessionDuration: Duration,
+    signupType: A,
+    signInType: B,
+    tokenTable: Table<c, C>,
+    signUp: (A) -> ListType<c, C>,
+    signIn: (B) -> ListType<c, C>,
+) = object: Scope<a, A, b, B, c, C>(
+    name,
+    sessionDuration,
+    signupType,
+    signInType,
+    tokenTable,
+
+) {
+    override fun signUp(auth: A): ListType<c, C> {
+        return signUp(auth)
+    }
+
+    override fun signIn(auth: B): ListType<c, C> {
+        return signIn(auth)
+    }
+
 }
 
 abstract class Scope<a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>>(
