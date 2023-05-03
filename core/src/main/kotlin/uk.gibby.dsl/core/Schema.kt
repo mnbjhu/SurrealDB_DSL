@@ -1,6 +1,7 @@
 package uk.gibby.dsl.core
 
 import uk.gibby.dsl.scopes.CodeBlockScope
+import uk.gibby.dsl.scopes.TransactionScope
 import uk.gibby.dsl.types.*
 import uk.gibby.dsl.types.BooleanType.Companion.FALSE
 import kotlin.reflect.KClass
@@ -217,14 +218,15 @@ data class FieldDefinition(
     }
 }
 
+
 fun <a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>>scopeOf(
     name: String,
     sessionDuration: Duration,
     signupType: A,
     signInType: B,
     tokenTable: Table<c, C>,
-    signUp: (A) -> ListType<c, C>,
-    signIn: (B) -> ListType<c, C>,
+    signUp: context(TransactionScope) (A) -> C,
+    signIn: context(TransactionScope) (B) -> ListType<c, C>,
 ) = object: Scope<a, A, b, B, c, C>(
     name,
     sessionDuration,
@@ -232,13 +234,15 @@ fun <a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>>scopeOf(
     signInType,
     tokenTable,
 
-) {
+    ) {
     override fun signUp(auth: A): ListType<c, C> {
-        return signUp(auth)
+        return signUp(TransactionScope(), auth).run {
+            list(this).createReference(getReference().removePrefix("RETURN "))
+        }
     }
 
     override fun signIn(auth: B): ListType<c, C> {
-        return signIn(auth)
+        return signIn(TransactionScope(), auth)
     }
 
 }
@@ -256,7 +260,7 @@ abstract class Scope<a, A: Reference<a>, b, B: Reference<b>, c, C: RecordType<c>
     fun getDefinition(): String {
         val signUpToken = signUp(signupType.createReference("\$creds") as A)
 
-        val signInToken = signIn(signInType.createReference("\$auth") as B)
+        val signInToken = signIn(signInType.createReference("\$creds") as B)
 
         return "DEFINE SCOPE $name\n" +
                 "SESSION $sessionDuration\n" +

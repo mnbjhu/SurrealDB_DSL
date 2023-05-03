@@ -12,15 +12,6 @@ interface Reference<T> {
     fun createReference(ref: String): Reference<T>
 }
 
-inline fun <reified T, U: RecordType<T>> Table<T, U>.createContent(content: T): ListType<T, U> =
-    ListType(recordType, "CREATE $name CONTENT ${surrealJson.encodeToString(content)}")
-
-
-fun <T, U: RecordType<T>> Table<T, U>.create(scope: context(SetScope) U.() -> Unit): ListType<T, U>{
-    val setScope = SetScope()
-    scope(setScope, recordType)
-    return ListType(recordType, "CREATE $name ${setScope.getSetString()}")
-}
 
 
 

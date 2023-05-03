@@ -5,12 +5,10 @@ import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.annotation.Relation
 import uk.gibby.dsl.annotation.Table
 import uk.gibby.dsl.core.PermissionType.*
-import uk.gibby.dsl.core.Schema
 import uk.gibby.dsl.core.scopeOf
 import uk.gibby.dsl.functions.*
 import uk.gibby.dsl.model.Linked
 import uk.gibby.dsl.types.BooleanType.Companion.FALSE
-import uk.gibby.dsl.types.create
 import uk.gibby.dsl.types.eq
 import kotlin.time.Duration
 
@@ -68,30 +66,6 @@ class UserSignUpDetails(
 )
 
 
-class SurrealTvSchema: Schema(person, movie, actedIn, directed, genre, user) {
-    override val scopes = listOf(userScope, adminScope)
-    override fun SchemaScope.configure() {
-        movie.noPermissionsFor(userScope, Create, Update, Delete)
-        actedIn.noPermissionsFor(userScope, Create, Update, Delete)
-        directed.noPermissionsFor(userScope, Create, Update, Delete)
-        genre.noPermissionsFor(userScope, Create, Update, Delete)
-        person.noPermissionsFor(userScope, Create, Update, Delete)
-        user
-            .noPermissionsFor(userScope,  Delete, Select)
-            .permissions(userScope, Create, Update) {
-                it.id eq id
-            }
-            .noPermissionsFor(adminScope, Create)
-            .configureFields {
-                details.email.assert { it.isEmail() }
-                details.dateOfBirth.assert { it lessThan Time.now() }
-                details.phoneNumber.assert { it.length() eq 14 and it.isNumeric() }
-                defineUniqueIndex("usernameIndex", username)
-                defineUniqueIndex("emailIndex", details.email)
-            }
-
-    }
-}
 
 
 val userScope = scopeOf(
@@ -104,8 +78,8 @@ val userScope = scopeOf(
         user.create {
             username setAs auth.credentials.username
             passwordHash setAs Crypto.Argon2.generate(auth.credentials.password)
-            details eq auth.details
-            isAdmin eq false
+            details setAs auth.details
+            isAdmin setAs false
         }
     },
     signIn = {  auth ->
@@ -120,12 +94,12 @@ val userScope = scopeOf(
 )
 
 val adminScope = scopeOf(
-    name = "user_scope",
+    name = "admin_scope",
     sessionDuration = Duration.parse("20m"),
     signupType = UserSignUpDetailsType,
     signInType = UserCredentialsType,
     tokenTable = user,
-    signUp = { user.selectAll { where(FALSE) } },
+    signUp = { user.selectAll { where(FALSE) }[0] },
     signIn = {  auth ->
         user.selectAll {
             where(

@@ -8,6 +8,6 @@ import uk.gibby.dsl.types.RecordType
 
 interface FilterScope {
     fun getFilterString(): String
-    fun where(condition: BooleanType)
-    fun <T, U: RecordType<T>>fetch(items: ListType<Linked<T>, RecordLink<T, U>>)
+    fun <T, U: RecordType<T>>U.where(condition: BooleanType): UnitType
+    fun <T, U: RecordType<T>>fetch(items: ListType<Linked<T>, RecordLink<T, U>>): UnitType
 }

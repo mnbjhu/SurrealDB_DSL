@@ -6,7 +6,7 @@ import uk.gibby.dsl.types.ListType
 import uk.gibby.dsl.types.RecordLink
 import uk.gibby.dsl.types.RecordType
 
-class FilterScopeImpl: FilterScope {
+class FilterScopeImpl<T, U: RecordType<T>>(override val type: U): FilterScope, ReturningScope<T, U> {
     private var where: String? = null
     private var fetch: String? = null
     override fun getFilterString(): String {
@@ -17,12 +17,14 @@ class FilterScopeImpl: FilterScope {
 
     }
 
-    override fun where(condition: BooleanType) {
+    override fun <T, U : RecordType<T>> U.where(condition: BooleanType): UnitType {
         where = condition.getReference()
+        return None
     }
 
-    override fun <T, U : RecordType<T>> fetch(items: ListType<Linked<T>, RecordLink<T, U>>) {
+    override fun <T, U : RecordType<T>> fetch(items: ListType<Linked<T>, RecordLink<T, U>>): UnitType {
         fetch = items.getReference()
+        return None
     }
 
 }

@@ -1,6 +1,7 @@
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.`should be equal to`
 import org.junit.jupiter.api.Test
+import schema.SurrealTvSchema
 import uk.gibby.dsl.core.PermissionType
 import uk.gibby.dsl.core.PermissionType.*
 import uk.gibby.dsl.core.Schema
@@ -59,7 +60,7 @@ class ConnectionTest {
             db.defineNamespace("test_namespace")
             db.defineDatabase("test_namespace", "test_database")
             db.use("test_namespace", "test_database")
-            db.define(NewSchema)
+            db.define(SurrealTvSchema)
         }
     }
 
@@ -72,22 +73,6 @@ class ConnectionTest {
             db.defineNamespace("test_namespace")
             db.invalidate()
             assertFails { db.removeNamespace("test_namespace") }
-        }
-    }
-}
-object NewSchema: Schema(user, product) {
-    override val scopes = listOf(LoggedInScope)
-    override fun SchemaScope.configure() {
-        user.permissions(LoggedInScope, Create, Select){
-            username eq "mnbjhu"
-        }
-        user.configureFields {
-            /*
-            username.permissions(LoggedInScope, Select){ auth ->
-                FALSE
-            }
-            TODO("Causes issues with the 'SELECT' statement")
-             */
         }
     }
 }
