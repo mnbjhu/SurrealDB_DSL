@@ -5,6 +5,7 @@ plugins {
 }
 
 group = "uk.gibby.dsl"
+version = "pr-0.0.1"
 
 repositories {
     mavenCentral()
