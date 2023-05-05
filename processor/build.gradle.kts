@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "1.8.0"
+    `java-library`
     `maven-publish`
 }
 
@@ -24,4 +25,12 @@ dependencies {
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
-
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+            }
+        }
+    }
+}
