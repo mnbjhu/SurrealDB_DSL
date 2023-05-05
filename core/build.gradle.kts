@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "1.8.0"
+    `maven-publish`
 }
 
 group = "uk.gibby.dsl"

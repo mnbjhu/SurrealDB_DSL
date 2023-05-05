@@ -63,13 +63,13 @@ class DatabaseConnection(private val host: String, private val port: Int = 8000)
     suspend fun defineDatabase(ns: String, db: String) {
         query("USE NS $ns; DEFINE DATABASE $db;")
     }
+    suspend fun removeDatabase(ns: String, db: String) {
+        query("USE NS $ns; REMOVE DATABASE $db;")
+    }
     suspend fun removeNamespace(name: String) {
         query("REMOVE NAMESPACE $name;")
     }
 
-    suspend fun removeDatabase(name: String) {
-        query("REMOVE DATABASE $name;")
-    }
     private suspend fun sendRequest(method: String, params: JsonArray): JsonElement {
         val id = count++.toString()
         val request = RpcRequest(id, method, params).also { println(it) }

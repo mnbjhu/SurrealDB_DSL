@@ -22,9 +22,10 @@ class LinkedSerializer<T : Any>(
 ) : KSerializer<Linked<T>> {
 
     @OptIn(ExperimentalSerializationApi::class)
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor(tSerializer.descriptor.serialName + "Link"){
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor(tSerializer.descriptor.serialName + "Link") {
+        element("id", String.serializer().descriptor)
         tSerializer.descriptor.elementDescriptors.forEach {
-            element("id", String.serializer().descriptor)
+            println("Type: ${this::class} SerialName: ${it.serialName}")
             element(it.serialName, it)
         }
     }

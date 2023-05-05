@@ -3,6 +3,7 @@ import com.squareup.kotlinpoet.*
 import uk.gibby.dsl.core.Schema
 import uk.gibby.dsl.core.TableDefinition
 
+/*
 fun buildSchema(tables: Sequence<KSClassDeclaration>): FileSpec {
     val fileBuilder = FileSpec.builder("", "TypedSchema")
     val classBuilder = TypeSpec
@@ -34,3 +35,5 @@ fun buildSchema(tables: Sequence<KSClassDeclaration>): FileSpec {
     )
     return fileBuilder.build()
 }
+
+ */
