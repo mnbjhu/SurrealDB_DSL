@@ -25,12 +25,3 @@ tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                from(components["java"])
-            }
-        }
-    }
-}
