@@ -4,7 +4,6 @@ import kotlinx.datetime.Instant
 import uk.gibby.dsl.annotation.Object
 import uk.gibby.dsl.annotation.Relation
 import uk.gibby.dsl.annotation.Table
-import uk.gibby.dsl.core.PermissionType.*
 import uk.gibby.dsl.core.scopeOf
 import uk.gibby.dsl.functions.*
 import uk.gibby.dsl.model.Linked
@@ -33,7 +32,7 @@ data class Genre(val name: String)
 class Directed
 
 @Relation<Person, Movie>
-data class ActedIn(val actedAs: String)
+data class ActedIn(val role: String)
 
 @Table
 data class User(

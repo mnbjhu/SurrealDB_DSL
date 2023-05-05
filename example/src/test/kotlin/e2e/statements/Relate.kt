@@ -18,9 +18,9 @@ open class Relate: Create() {
                 val johnTravolta by person.selectAll { where(name eq "John Travolta") }
                 val samLJackson by person.selectAll { where(name eq "Samuel L. Jackson") }
                 val pulpFiction by movie.selectAll { where(title eq "Pulp Fiction") }
-                +relate(johnTravolta, actedIn, pulpFiction, ActedIn(actedAs = "Vincent Vega"))
-                relate(samLJackson, actedIn, pulpFiction, ActedIn(actedAs = "Jules Winfield"))
-            }.first() `should be equal to` ActedIn(actedAs = "Jules Winfield")
+                +relate(johnTravolta, actedIn, pulpFiction, ActedIn(role = "Vincent Vega"))
+                relate(samLJackson, actedIn, pulpFiction, ActedIn(role = "Jules Winfield"))
+            }.first() `should be equal to` ActedIn(role = "Jules Winfield")
         }
     }
 }

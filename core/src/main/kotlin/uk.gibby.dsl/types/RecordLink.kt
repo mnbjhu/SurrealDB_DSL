@@ -30,7 +30,7 @@ class TableId<T, U: RecordType<T>>(reference: String, inner: U): RecordLink<T, U
     fun selectAll(selectScope: context(FilterScope) U.() -> Unit = {}): U {
         val filter = FilterScopeImpl(inner)
         with(filter) { selectScope(inner) }
-        return inner.createReference("SELECT * FROM ${getReference()}${filter.getFilterString()}") as U
+        return inner.createReference("(SELECT * FROM ${getReference()}${filter.getFilterString()})") as U
     }
 
     context(TransactionScope)
@@ -39,7 +39,7 @@ class TableId<T, U: RecordType<T>>(reference: String, inner: U): RecordLink<T, U
         val toSelect = with(filter) {
             projection(inner)
         }
-        return toSelect.createReference("SELECT VALUE ${toSelect.getReference()} FROM ${getReference()}${filter.getFilterString()}") as R
+        return toSelect.createReference("(SELECT VALUE ${toSelect.getReference()} FROM ${getReference()}${filter.getFilterString()})") as R
     }
 
     context(TransactionScope)

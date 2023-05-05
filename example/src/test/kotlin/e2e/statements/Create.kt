@@ -56,14 +56,14 @@ open class Create: DatabaseTest() {
     fun largeCreate() {
         runBlocking {
             db.transaction {
-                val action by genre["action"].createContent(Genre("Action")) { id }
-                val thriller by genre["thriller"].createContent(Genre("Thriller")) { id }
-                val comedy by genre["comedy"].createContent(Genre("Comedy")) { id }
-                movie["pulp_fiction"].create {
-                    title setAs "Pulp Fiction"
-                    genres setAs listOf(action, thriller, comedy)
-                    released setAs Instant.parse("1994-10-21T00:00:00Z")
-                    rating setAs 8.9
+                val action by genre.createContent(Genre("Action")) { id }
+                val thriller by genre.createContent(Genre("Thriller")) { id }
+                val comedy by genre.createContent(Genre("Comedy")) { id }
+                movie.create {
+                    title to "Pulp Fiction"
+                    genres to listOf(action, thriller, comedy)
+                    released to Instant.parse("1994-10-21T00:00:00Z")
+                    rating to 8.9
                 }
             }
         }

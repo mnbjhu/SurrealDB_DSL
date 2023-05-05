@@ -1,27 +1,25 @@
 package uk.gibby.dsl.core
 
-import kotlinx.serialization.encodeToString
-import uk.gibby.dsl.driver.surrealJson
 import uk.gibby.dsl.scopes.*
 import uk.gibby.dsl.types.*
 
 data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
     context(TransactionScope)
     fun delete(): ListType<String?, NullableType<String, StringType>> {
-        return ListType(NullableType("_", stringType), "DELETE FROM $name")
+        return ListType(NullableType("_", stringType), "(DELETE FROM $name)")
     }
     context(TransactionScope)
     fun <a, A: Reference<a>>delete(deleteScope: context(FilterScope, ReturningScope<T, U>) U.() -> A): ListType<String?, NullableType<String, StringType>> {
         val filter = FilterScopeImpl(recordType)
         val returned = filter.deleteScope(ReturningScopeImpl(recordType), recordType)
-        return ListType(NullableType("_", stringType), "DELETE FROM $name${filter.getFilterString()} RETURN ${returned.getReference()}")
+        return ListType(NullableType("_", stringType), "(DELETE FROM $name${filter.getFilterString()} RETURN ${returned.getReference()})")
     }
 
     context(TransactionScope)
     fun selectAll(selectScope: context(FilterScope) U.() -> Unit = {}): ListType<T, U> {
         val filter = FilterScopeImpl(recordType)
         with(filter) { selectScope(recordType) }
-        return ListType(recordType, "SELECT * FROM $name${filter.getFilterString()}")
+        return ListType(recordType, "(SELECT * FROM $name${filter.getFilterString()})")
     }
 
     context(TransactionScope)
@@ -32,7 +30,7 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
         }
         return ListType(
             toSelect,
-            "SELECT VALUE ${toSelect.getReference()} FROM $name${filter.getFilterString()}"
+            "(SELECT VALUE ${toSelect.getReference()} FROM $name${filter.getFilterString()})"
         )
     }
 
