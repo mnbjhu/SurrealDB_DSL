@@ -2,10 +2,8 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "1.8.0"
     `maven-publish`
+    `java-library`
 }
-
-group = "uk.gibby.dsl"
-version = "pr-0.0.2"
 
 repositories {
     mavenCentral()
@@ -30,4 +28,13 @@ tasks.getByName<Test>("test") {
 }
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
     kotlinOptions.freeCompilerArgs = listOf("-Xcontext-receivers")
+}
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+            }
+        }
+    }
 }
