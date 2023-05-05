@@ -12,7 +12,7 @@ import uk.gibby.dsl.model.Linked
 
 class Fetch: Create() {
     @Test
-    fun `SELECT * FROM $table FETCH $records`(){
+    fun basicFetch() {
         `CREATE $table SET ( $param = $value )`()
         runBlocking {
             db.transaction {

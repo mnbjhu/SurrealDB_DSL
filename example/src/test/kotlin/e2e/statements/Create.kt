@@ -8,7 +8,23 @@ import org.junit.jupiter.api.Test
 import schema.*
 
 open class Create: DatabaseTest() {
+
     @Test
+    fun createContent(){
+        `CREATE $table CONTENT $data`()
+    }
+
+    @Test
+    fun createContentWithId(){
+        `CREATE $table_id CONTENT $data`()
+    }
+
+    @Test
+    fun createWithReferences() {
+        `CREATE $table SET ( $param = $value )`()
+    }
+
+
     fun `CREATE $table CONTENT $data`() {
         runBlocking {
             db.transaction {
@@ -22,7 +38,6 @@ open class Create: DatabaseTest() {
         }
     }
 
-    @Test
     fun `CREATE $table_id CONTENT $data`() {
         runBlocking {
             db.transaction {
@@ -32,12 +47,11 @@ open class Create: DatabaseTest() {
             }
         }.name `should be equal to` "Comedy"
     }
-    @Test
     fun `CREATE $table SET ( $param = $value )`() {
         runBlocking {
             `CREATE $table CONTENT $data`()
             db.transaction {
-                movie["pulp_fiction"].create {
+                movie.create {
                     title setAs "Pulp Fiction"
                     genres setAs genre.select { id }
                     released setAs Instant.parse("1994-10-21T00:00:00Z")

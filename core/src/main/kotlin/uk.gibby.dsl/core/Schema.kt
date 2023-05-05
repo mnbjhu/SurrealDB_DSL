@@ -207,6 +207,7 @@ data class FieldDefinition(
         object ARRAY: Type("array")
         object OBJECT: Type("object")
         class RecordLink(tableName: String): Type("record($tableName)")
+
     }
     fun getDefinition(name: String, tableName: String): String {
         return "DEFINE FIELD $name ON TABLE $tableName TYPE ${type.text}" +

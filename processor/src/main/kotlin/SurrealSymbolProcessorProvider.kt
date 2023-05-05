@@ -17,7 +17,6 @@ class SurrealSymbolProcessorProvider: SymbolProcessorProvider {
 }
 
 val processed = mutableSetOf<KSClassDeclaration>()
-var schemaProcessed = false
 
 class SurrealSymbolProcessor(private val codeGenerator: CodeGenerator, private val logger: KSPLogger) : SymbolProcessor {
     override fun process(resolver: Resolver): List<KSAnnotated> {

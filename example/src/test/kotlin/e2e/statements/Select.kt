@@ -17,7 +17,36 @@ import uk.gibby.dsl.types.`←-o`
 class Select: Relate() {
 
     @Test
-    fun `SELECT * FROM $table`(){
+    fun selectAllFromTableId() {
+        `SELECT all FROM $table`()
+    }
+
+    @Test
+    fun selectProjectionFromTableId() {
+        `SELECT $projection FROM $table`()
+    }
+
+    @Test
+    fun selectRelatedTableIds() {
+        `SELECT $from - $with - $to FROM $table`()
+    }
+
+    @Test
+    fun selectRelatedTable() {
+        `SELECT $from - $with - $to all FROM $table`()
+    }
+
+    @Test
+    fun selectRelationId() {
+        `SELECT $from - $with FROM $table`()
+    }
+
+    @Test
+    fun selectPath() {
+        `SELECT $path FROM $table`()
+    }
+
+    fun `SELECT all FROM $table`(){
         `RELATE $from - $with - $to`()
         runBlocking {
             db.transaction {
@@ -31,7 +60,6 @@ class Select: Relate() {
                 rating `should be equal to` 8.9
             }
     }
-    @Test
     fun `SELECT $projection FROM $table`(){
         `RELATE $from - $with - $to`()
         runBlocking {
@@ -41,7 +69,6 @@ class Select: Relate() {
         } `should contain same` listOf("Pulp Fiction")
     }
 
-    @Test
     fun `SELECT $from - $with - $to FROM $table`(){
         `RELATE $from - $with - $to`()
         runBlocking {
@@ -52,13 +79,12 @@ class Select: Relate() {
                 }
             }.first().first().apply {
                 `should be instance of`<Linked.Reference<*>>()
-                id `should be equal to` "Movie:pulp_fiction"
+                id `should match` "^Movie:.*".toRegex()
             }
         }
     }
 
-    @Test
-    fun `SELECT $from - $with - $to * FROM $table`(){
+    fun `SELECT $from - $with - $to all FROM $table`(){
         `RELATE $from - $with - $to`()
         runBlocking {
             db.transaction {
@@ -77,7 +103,6 @@ class Select: Relate() {
         }
     }
 
-    @Test
     fun `SELECT $from - $with FROM $table`(){
         `RELATE $from - $with - $to`()
         runBlocking {
@@ -93,7 +118,7 @@ class Select: Relate() {
             }
         }
     }
-    @Test
+
     fun `SELECT $path FROM $table`(){
         `RELATE $from - $with - $to`()
         runBlocking {

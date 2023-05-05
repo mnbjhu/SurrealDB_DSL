@@ -10,7 +10,13 @@ import schema.person
 import uk.gibby.dsl.types.eq
 
 open class Relate: Create() {
+
     @Test
+    fun basicRelateTest() {
+        `RELATE $from - $with - $to`()
+    }
+
+
     fun `RELATE $from - $with - $to`(){
         `CREATE $table SET ( $param = $value )`()
         runBlocking {

@@ -10,6 +10,10 @@ import schema.genre
 class Insert: DatabaseTest(){
 
     @Test
+    fun basicInsert() {
+        `INSERT INTO $table $data`()
+    }
+
     fun `INSERT INTO $table $data`() {
         runBlocking {
             val genres = listOf(Genre("Action"), Genre("Horror"), Genre("Comedy"), Genre("Sci-Fi"))
