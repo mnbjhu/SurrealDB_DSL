@@ -24,7 +24,7 @@ fun <T, U: Reference<T>>ConditionalBuilder<T, U>.end(): U {
     return inner.createReference(getReference() + " END") as U
 }
 
-fun <T, U: Reference<T>>ConditionalBuilder<T, U>.`else if`(condition: BooleanType, then: context(CodeBlockScope) () -> U): ConditionalBuilder<T, U> {
+fun <T, U: Reference<T>>ConditionalBuilder<T, U>.elseIf(condition: BooleanType, then: context(CodeBlockScope) () -> U): ConditionalBuilder<T, U> {
     val codeBlock = CodeBlockScope()
     val result = then(codeBlock)
     with(codeBlock) { +result }
