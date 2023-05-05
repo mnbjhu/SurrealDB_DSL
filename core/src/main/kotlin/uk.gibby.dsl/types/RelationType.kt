@@ -40,6 +40,6 @@ fun <a, A: RecordType<a>, b, B: RelationType<c, C, b, a, A>, c, C: RecordType<c>
     return if(getReference() == "_") ListType(with(inner.inner){ linked(to) } , "<-" + to.name)
     else ListType(with(inner.inner){ linked(to) }, "${getReference()}<-${to.name}")
 }
-fun <T, U: RecordType<T>>RecordLink<T, U>.`*`(): U = inner.createReference(getReference() + ".*") as U
-val <T, U: RecordType<T>>ListType<Linked<T>, RecordLink<T, U>>.`*`: ListType<T, U>
+fun <T, U: RecordType<T>>RecordLink<T, U>.STAR(): U = inner.createReference(getReference() + ".*") as U
+val <T, U: RecordType<T>>ListType<Linked<T>, RecordLink<T, U>>.STAR: ListType<T, U>
     get() = list(inner.inner).createReference(getReference() + ".*")

@@ -9,7 +9,7 @@ import org.amshove.kluent.`should match`
 import org.junit.jupiter.api.Test
 import schema.*
 import uk.gibby.dsl.model.Linked
-import uk.gibby.dsl.types.`*`
+import uk.gibby.dsl.types.STAR
 import uk.gibby.dsl.types.eq
 import uk.gibby.dsl.types.`o-→`
 import uk.gibby.dsl.types.`←-o`
@@ -90,7 +90,7 @@ class Select: Relate() {
             db.transaction {
                 person.select {
                     where(name eq "John Travolta")
-                    `o-→`(actedIn).`o-→`(movie).`*`
+                    `o-→`(actedIn).`o-→`(movie).STAR
                 }
             }.also { it.size `should be equal to` 1 }
                 .first().first()
@@ -133,7 +133,7 @@ class Select: Relate() {
                 +relate(quentin, directed, pulpFiction, Directed())
                 person.select {
                     where(name eq "John Travolta")
-                    `o-→`(actedIn).`o-→`(movie).`←-o`(directed).`←-o`(person).`*`
+                    `o-→`(actedIn).`o-→`(movie).`←-o`(directed).`←-o`(person).STAR
                 }
             }.also { println(it) }
         }
