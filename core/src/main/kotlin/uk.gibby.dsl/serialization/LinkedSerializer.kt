@@ -6,10 +6,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.elementDescriptors
 import kotlinx.serialization.descriptors.elementNames
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.*
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import uk.gibby.dsl.driver.surrealJson
@@ -45,7 +42,12 @@ class LinkedSerializer<T : Any>(
     }
 
     override fun serialize(encoder: Encoder, value: Linked<T>) {
-        TODO()
+        when(value) {
+            is Linked.Reference -> encoder.encodeStructure(descriptor) { encodeStringElement(descriptor, 0, value.id) }
+            is Linked.Actual -> {
+                encoder.encodeSerializableValue(tSerializer, value.result)
+            }
+        }
     }
 }
 
