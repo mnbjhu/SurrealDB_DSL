@@ -5,6 +5,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.elementDescriptors
+import kotlinx.serialization.descriptors.elementNames
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -24,9 +25,9 @@ class LinkedSerializer<T : Any>(
     @OptIn(ExperimentalSerializationApi::class)
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor(tSerializer.descriptor.serialName + "Link") {
         element("id", String.serializer().descriptor)
-        tSerializer.descriptor.elementDescriptors.forEach {
-            println("Type: ${this::class} SerialName: ${it.serialName}")
-            element(it.serialName, it)
+        tSerializer.descriptor.elementNames.forEachIndexed { index, name ->
+            val descriptor = tSerializer.descriptor.getElementDescriptor(index)
+            element(name, descriptor)
         }
     }
 
