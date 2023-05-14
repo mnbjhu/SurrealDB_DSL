@@ -43,7 +43,7 @@ class LinkedSerializer<T : Any>(
 
     override fun serialize(encoder: Encoder, value: Linked<T>) {
         when(value) {
-            is Linked.Reference -> encoder.encodeStructure(descriptor) { encodeStringElement(descriptor, 0, value.id) }
+            is Linked.Reference -> encoder.encodeString(value.id)
             is Linked.Actual -> {
                 encoder.encodeSerializableValue(tSerializer, value.result)
             }
