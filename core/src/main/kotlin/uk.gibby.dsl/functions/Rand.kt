@@ -4,7 +4,7 @@ import uk.gibby.dsl.types.*
 
 
 fun rand() = doubleType.createReference("rand()")
-class Rand {
+object Rand {
 
     fun bool() = booleanType.createReference("rand::bool()")
     fun float() = doubleType.createReference("rand::float()")
