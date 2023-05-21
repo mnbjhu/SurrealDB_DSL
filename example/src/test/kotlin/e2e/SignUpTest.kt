@@ -50,10 +50,4 @@ class SignUpTest: DatabaseTest() {
         }
     }
 
-    @Test
-    fun tempTest() {
-        runBlocking {
-            delay(100000)
-        }
-    }
 }
