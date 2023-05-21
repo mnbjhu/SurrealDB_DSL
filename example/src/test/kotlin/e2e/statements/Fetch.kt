@@ -1,5 +1,7 @@
 package e2e.statements
 
+import e2e.DatabaseTest
+import e2e.statements.Create.Companion.`CREATE $table SET ( $param = $value )`
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import org.amshove.kluent.`should be equal to`
@@ -10,10 +12,10 @@ import schema.Genre
 import schema.movie
 import uk.gibby.dsl.model.Linked
 
-class Fetch: Create() {
+class Fetch: DatabaseTest() {
     @Test
     fun basicFetch() {
-        `CREATE $table SET ( $param = $value )`()
+        `CREATE $table SET ( $param = $value )`(db)
         runBlocking {
             db.transaction {
                 movie.selectAll { fetch(genres) }

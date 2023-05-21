@@ -61,7 +61,7 @@ class DatabaseConnection(private val host: String, private val port: Int = 8000)
     }
 
     suspend fun defineDatabase(ns: String, db: String) {
-        query("USE NS $ns; DEFINE DATABASE $db;")
+        query("DEFINE NS $ns; USE NS $ns; DEFINE DATABASE $db;")
     }
     suspend fun removeDatabase(ns: String, db: String) {
         query("USE NS $ns; REMOVE DATABASE $db;")
@@ -121,12 +121,7 @@ class DatabaseConnection(private val host: String, private val port: Int = 8000)
         with(transaction) { +result }
         val queryText = transaction.getQueryText()
         val rawResponse = query(queryText).also { println(it) }
-        val response = try {
-            buildJsonArray { (rawResponse as JsonArray).forEach { add(surrealJson.decodeFromJsonElement<Row1>(it).col1) } }
-        } catch (e: Exception) {
-            rawResponse
-        }
-        return surrealJson.decodeFromJsonElement(response)
+        return surrealJson.decodeFromJsonElement(rawResponse)
     }
 
     suspend fun invalidate(){

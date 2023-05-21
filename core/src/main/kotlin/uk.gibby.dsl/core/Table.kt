@@ -2,6 +2,7 @@ package uk.gibby.dsl.core
 
 import uk.gibby.dsl.scopes.*
 import uk.gibby.dsl.types.*
+import uk.gibby.dsl.types.row.RowType
 
 data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
     context(TransactionScope)
@@ -30,7 +31,7 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
         }
         return ListType(
             toSelect,
-            "(SELECT VALUE ${toSelect.getReference()} FROM $name${filter.getFilterString()})"
+            "(SELECT ${if (toSelect is RowType) "" else "VALUE " }${toSelect.getReference()} FROM $name${filter.getFilterString()})"
         )
     }
 
@@ -44,7 +45,7 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
                     "AFTER" -> "AFTER"
                     "BEFORE" -> "BEFORE"
                     "NONE" -> "NONE"
-                    else -> "VALUE $ref"
+                    else -> { if(returned is RowType) ref else "VALUE $ref" }
                 }}")
     }
     operator fun get(id: String): TableId<T, U> {
