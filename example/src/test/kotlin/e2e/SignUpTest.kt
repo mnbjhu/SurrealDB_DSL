@@ -1,5 +1,6 @@
 package e2e
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import org.amshove.kluent.`should be equal to`
@@ -46,6 +47,13 @@ class SignUpTest: DatabaseTest() {
                     passwordHash `should not be equal to` testUserCredentials.password
                     isAdmin `should be equal to` false
                 }
+        }
+    }
+
+    @Test
+    fun tempTest() {
+        runBlocking {
+            delay(100000)
         }
     }
 }

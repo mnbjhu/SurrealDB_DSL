@@ -1,5 +1,7 @@
 package e2e.statements
 
+import e2e.DatabaseTest
+import e2e.statements.Relate.Companion.`RELATE $from - $with - $to`
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import org.amshove.kluent.`should be equal to`
@@ -14,7 +16,7 @@ import uk.gibby.dsl.types.eq
 import uk.gibby.dsl.types.`o-→`
 import uk.gibby.dsl.types.`←-o`
 
-class Select: Relate() {
+class Select: DatabaseTest() {
 
     @Test
     fun selectAllFromTableId() {
@@ -47,7 +49,7 @@ class Select: Relate() {
     }
 
     fun `SELECT all FROM $table`(){
-        `RELATE $from - $with - $to`()
+        `RELATE $from - $with - $to`(db)
         runBlocking {
             db.transaction {
                 movie.selectAll()
@@ -61,7 +63,7 @@ class Select: Relate() {
             }
     }
     fun `SELECT $projection FROM $table`(){
-        `RELATE $from - $with - $to`()
+        `RELATE $from - $with - $to`(db)
         runBlocking {
             db.transaction {
                 movie.select { title }
@@ -70,7 +72,7 @@ class Select: Relate() {
     }
 
     fun `SELECT $from - $with - $to FROM $table`(){
-        `RELATE $from - $with - $to`()
+        `RELATE $from - $with - $to`(db)
         runBlocking {
             db.transaction {
                 person.select {
@@ -85,7 +87,7 @@ class Select: Relate() {
     }
 
     fun `SELECT $from - $with - $to all FROM $table`(){
-        `RELATE $from - $with - $to`()
+        `RELATE $from - $with - $to`(db)
         runBlocking {
             db.transaction {
                 person.select {
@@ -104,7 +106,7 @@ class Select: Relate() {
     }
 
     fun `SELECT $from - $with FROM $table`(){
-        `RELATE $from - $with - $to`()
+        `RELATE $from - $with - $to`(db)
         runBlocking {
             db.transaction {
                 person.select {
@@ -120,7 +122,7 @@ class Select: Relate() {
     }
 
     fun `SELECT $path FROM $table`(){
-        `RELATE $from - $with - $to`()
+        `RELATE $from - $with - $to`(db)
         runBlocking {
             db.transaction {
                 val quentin by person.createContent(

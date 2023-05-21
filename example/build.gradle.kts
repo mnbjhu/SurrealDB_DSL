@@ -18,6 +18,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")// for JVM:
     testImplementation("org.amshove.kluent:kluent:1.72")
+    testImplementation("org.testcontainers:testcontainers:1.18.1")
+    testImplementation("org.testcontainers:junit-jupiter:1.18.1")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.8.0")
 }
 
