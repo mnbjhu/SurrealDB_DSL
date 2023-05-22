@@ -1,6 +1,8 @@
 package uk.gibby.dsl.functions
 
 
+import kotlinx.serialization.encodeToString
+import uk.gibby.dsl.driver.surrealJson
 import uk.gibby.dsl.types.*
 
 object Math {
@@ -34,3 +36,46 @@ object Math {
     fun sum(array: ListType<Double, DoubleType>) = doubleType.createReference("array::sum(${array.getReference()})")
     fun sum(array: ListType<Long, LongType>) = longType.createReference("array::sum(${array.getReference()})")
 }
+
+// Math operators
+
+operator fun DoubleType.plus(other: DoubleType) = doubleType.createReference("(${this.getReference()} + ${other.getReference()})")
+operator fun DoubleType.plus(other: LongType) = doubleType.createReference("(${this.getReference()} + ${other.getReference()})")
+operator fun DoubleType.plus(other: Double) = doubleType.createReference("(${this.getReference()} + ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.plus(other: Long) = doubleType.createReference("(${this.getReference()} + ${surrealJson.encodeToString(other)})")
+operator fun LongType.plus(other: DoubleType) = doubleType.createReference("(${this.getReference()} + ${other.getReference()})")
+operator fun LongType.plus(other: LongType) = longType.createReference("(${this.getReference()} + ${other.getReference()})")
+operator fun LongType.plus(other: Double) = doubleType.createReference("(${this.getReference()} + ${surrealJson.encodeToString(other)})")
+operator fun LongType.plus(other: Long) = longType.createReference("(${this.getReference()} + ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.minus(other: DoubleType) = doubleType.createReference("(${this.getReference()} - ${other.getReference()})")
+operator fun DoubleType.minus(other: LongType) = doubleType.createReference("(${this.getReference()} - ${other.getReference()})")
+operator fun DoubleType.minus(other: Double) = doubleType.createReference("(${this.getReference()} - ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.minus(other: Long) = doubleType.createReference("(${this.getReference()} - ${surrealJson.encodeToString(other)})")
+operator fun LongType.minus(other: DoubleType) = doubleType.createReference("(${this.getReference()} - ${other.getReference()})")
+operator fun LongType.minus(other: LongType) = longType.createReference("(${this.getReference()} - ${other.getReference()})")
+operator fun LongType.minus(other: Double) = doubleType.createReference("(${this.getReference()} - ${surrealJson.encodeToString(other)})")
+operator fun LongType.minus(other: Long) = longType.createReference("(${this.getReference()} - ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.times(other: DoubleType) = doubleType.createReference("(${this.getReference()} * ${other.getReference()})")
+operator fun DoubleType.times(other: LongType) = doubleType.createReference("(${this.getReference()} * ${other.getReference()})")
+operator fun DoubleType.times(other: Double) = doubleType.createReference("(${this.getReference()} * ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.times(other: Long) = doubleType.createReference("(${this.getReference()} * ${surrealJson.encodeToString(other)})")
+operator fun LongType.times(other: DoubleType) = doubleType.createReference("(${this.getReference()} * ${other.getReference()})")
+operator fun LongType.times(other: LongType) = longType.createReference("(${this.getReference()} * ${other.getReference()})")
+operator fun LongType.times(other: Double) = doubleType.createReference("(${this.getReference()} * ${surrealJson.encodeToString(other)})")
+operator fun LongType.times(other: Long) = longType.createReference("(${this.getReference()} * ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.div(other: DoubleType) = doubleType.createReference("(${this.getReference()} / ${other.getReference()})")
+operator fun DoubleType.div(other: LongType) = doubleType.createReference("(${this.getReference()} / ${other.getReference()})")
+operator fun DoubleType.div(other: Double) = doubleType.createReference("(${this.getReference()} / ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.div(other: Long) = doubleType.createReference("(${this.getReference()} / ${surrealJson.encodeToString(other)})")
+operator fun LongType.div(other: DoubleType) = doubleType.createReference("(${this.getReference()} / ${other.getReference()})")
+operator fun LongType.div(other: LongType) = longType.createReference("(${this.getReference()} / ${other.getReference()})")
+operator fun LongType.div(other: Double) = doubleType.createReference("(${this.getReference()} / ${surrealJson.encodeToString(other)})")
+operator fun LongType.div(other: Long) = longType.createReference("(${this.getReference()} / ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.rem(other: DoubleType) = doubleType.createReference("(${this.getReference()} % ${other.getReference()})")
+operator fun DoubleType.rem(other: LongType) = doubleType.createReference("(${this.getReference()} % ${other.getReference()})")
+operator fun DoubleType.rem(other: Double) = doubleType.createReference("(${this.getReference()} % ${surrealJson.encodeToString(other)})")
+operator fun DoubleType.rem(other: Long) = doubleType.createReference("(${this.getReference()} % ${surrealJson.encodeToString(other)})")
+operator fun LongType.rem(other: DoubleType) = doubleType.createReference("(${this.getReference()} % ${other.getReference()})")
+operator fun LongType.rem(other: LongType) = longType.createReference("(${this.getReference()} % ${other.getReference()})")
+operator fun LongType.rem(other: Double) = doubleType.createReference("(${this.getReference()} % ${surrealJson.encodeToString(other)})")
+operator fun LongType.rem(other: Long) = longType.createReference("(${this.getReference()} % ${surrealJson.encodeToString(other)})")
