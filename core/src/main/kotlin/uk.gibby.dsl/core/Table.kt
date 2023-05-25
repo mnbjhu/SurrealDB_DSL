@@ -1,5 +1,6 @@
 package uk.gibby.dsl.core
 
+import kotlinx.coroutines.flow.Flow
 import uk.gibby.dsl.scopes.*
 import uk.gibby.dsl.types.*
 import uk.gibby.dsl.types.row.RowType
@@ -22,6 +23,8 @@ data class Table<T, U: RecordType<T>>(val name: String, val recordType: U) {
         with(filter) { selectScope(recordType) }
         return ListType(recordType, "(SELECT * FROM $name${filter.getFilterString()})")
     }
+
+
 
     context(TransactionScope)
     fun <r, R: Reference<r>>select(projection: context(FilterScope) U.() -> R): ListType<r, R> {

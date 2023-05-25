@@ -12,19 +12,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.*
 import uk.gibby.dsl.core.Schema
 import uk.gibby.dsl.core.Scope
+import uk.gibby.dsl.core.Table
 import uk.gibby.dsl.model.*
 import uk.gibby.dsl.model.auth.RootAuth
 import uk.gibby.dsl.model.auth.ScopeAuth
 import uk.gibby.dsl.model.rows.Row1
 import uk.gibby.dsl.model.rpc.RpcRequest
 import uk.gibby.dsl.model.rpc.RpcResponse
+import uk.gibby.dsl.scopes.FilterScope
+import uk.gibby.dsl.scopes.FilterScopeImpl
 import uk.gibby.dsl.scopes.TransactionScope
+import uk.gibby.dsl.types.ListType
 import uk.gibby.dsl.types.RecordType
 import uk.gibby.dsl.types.Reference
 import java.util.concurrent.CancellationException
@@ -126,5 +131,10 @@ class DatabaseConnection(private val host: String, private val port: Int = 8000)
 
     suspend fun invalidate(){
         sendRequest("invalidate", JsonArray(listOf()))
+    }
+
+
+    suspend fun <T, U: RecordType<T>>liveSelectAll(table: Table<T, U>) {
+        query("LIVE SELECT * FROM ${table.name}")
     }
 }
