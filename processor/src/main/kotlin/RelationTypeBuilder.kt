@@ -37,7 +37,7 @@ fun generateRelationType(element: KSClassDeclaration, resolver: Resolver, logger
             )
                 .getter(
                     FunSpec.getterBuilder()
-                        .addCode("return linked(%M)", MemberName(
+                        .addCode("return attrOf(\"in\", linked(%M))", MemberName(
                             inType.declaration.packageName.asString(),
                             inType.toString().replaceFirstChar(Char::lowercaseChar)
                         )
@@ -54,7 +54,7 @@ fun generateRelationType(element: KSClassDeclaration, resolver: Resolver, logger
             )
                 .getter(
                     FunSpec.getterBuilder()
-                        .addCode("return linked(%M)", MemberName(
+                        .addCode("return attrOf(\"out\", linked(%M))", MemberName(
                             outType.declaration.packageName.asString(),
                             outType.toString().replaceFirstChar(Char::lowercaseChar)
                         )

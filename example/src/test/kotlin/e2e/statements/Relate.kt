@@ -4,6 +4,7 @@ import e2e.DatabaseTest
 import e2e.statements.Create.Companion.`CREATE $table SET ( $param = $value )`
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.`should be equal to`
+import org.junit.Ignore
 import org.junit.jupiter.api.Test
 import schema.ActedIn
 import schema.actedIn
@@ -17,6 +18,23 @@ open class Relate: DatabaseTest() {
     @Test
     fun basicRelateTest() {
         `RELATE $from - $with - $to`(db)
+    }
+
+    // Think this is due to a surreal bug
+    @Test
+    @Ignore
+    fun createRelation() {
+        runBlocking {
+            db.transaction {
+                val johnTravolta by person.create { name setAs "John Travolta" }
+                val pulpFiction by movie.create { title setAs "Pulp Fiction" }
+                actedIn.create {
+                    `in` setAs johnTravolta.id
+                    `out` setAs pulpFiction.id
+                    role setAs "Vincent Vega"
+                }
+            }
+        }
     }
 
     companion object {

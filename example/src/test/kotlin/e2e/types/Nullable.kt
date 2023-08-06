@@ -32,30 +32,13 @@ class NullableTest: DatabaseTest() {
             } `should be equal to` "other thing"
         }
     }
-
-    @Test
-    fun tempTest() {
-        runBlocking {
-            delay(100000)
-        }
-    }
 }
 
 
 
 
 @Testcontainers
-
-
-
 class ContainerTest {
-    @Test
-    fun myTest(){
-        runBlocking {
-            println()
-            delay(1000000)
-        }
-    }
     companion object {
         @Container
         var surrealDb: GenericContainer<*> = GenericContainer<Nothing>(DockerImageName.parse("surrealdb/surrealdb:latest")).apply {
